@@ -12,18 +12,13 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <semaphore.h>
-
+#include <sched.h>
 
 #include <cuda.h>
 #include <cufft.h>
 #include <cuda_runtime_api.h>
-
-#include <sched.h>
 
 #include <s6GPU.h>
 #include "hashpipe.h"
@@ -34,6 +29,10 @@
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
 int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHandle *fft_plan_p, int initial) {
+
+    extern cufft_config_t cufft_config;
+
+    struct timespec start, stop;
     
     int num_channels_max, num_channels_utilized;
 
@@ -48,7 +47,6 @@ int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHand
 
     if(!initial) {
         delete_device_vectors(*dv_p);
-        cufftDestroy(*fft_plan_p);
     }
 
     // Configure GPU vectors...
@@ -62,30 +60,30 @@ int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHand
     *dv_p = init_device_vectors(num_channels_max, num_channels_utilized, N_POLS_PER_BEAM);
 
     // Configure cuFFT...
-    size_t  nfft_     = N_TIME_SAMPLES;                                 // FFT length
+    cufft_config.nfft_     = N_TIME_SAMPLES;                                
+    cufft_config.ostride   = 1;                                
+    cufft_config.idist     = 1;                                
+    cufft_config.odist     = cufft_config.nfft_;                        
 #ifdef SOURCE_FAST
-	cufftType fft_type = CUFFT_R2C;										// real to complex
-	fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", fft_type);
-    																	// one pol at a time
-    size_t  nbatch    = (num_coarse_chan);                              // number of FFT batches to do 
-																		// (only FFT the utilized chans)      
-    int     istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;      // this effectively transposes the input data
-																		// (must stride over all (max) chans)
+	fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
+	cufft_config.fft_type = CUFFT_R2C;								
+    cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
+    cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
 #else
-	cufftType fft_type = CUFFT_C2C;														// complex to complex
-	fprintf(stderr, "configuring cuFFT for complex to complex transforms (cufftType %d)\n", fft_type);
-    																					// two pols at a time
-    size_t  nbatch    = (num_coarse_chan*N_POLS_PER_BEAM);              				// number of FFT batches to do  
-																						// (only FFT the utilized chans)   
-    int     istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM;    // this effectively transposes the input data
-																						// (must stride over all (max) chans)
+	fprintf(stderr, "configuring cuFFT for complex to complex transforms (cufftType %d)\n", cufft_config.fft_type);
+	cufft_config.fft_type = CUFFT_C2C;													
+    cufft_config.nbatch    = (num_coarse_chan*N_POLS_PER_BEAM);                             // only FFT the utilized chans   
+    cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM;   // must stride over all (max) chans
 #endif
-    int     ostride   = 1;                                // no transpose needed on the output
-    int     idist     = 1;                                // distance between 1st input elements of consecutive batches
-    int     odist     = nfft_;                            // distance between 1st output elements of consecutive batches
-    create_fft_plan_1d(fft_plan_p, istride, idist, ostride, odist, nfft_, nbatch, fft_type);
 
-    fprintf(stderr, "...done : nfft : %lu nbatch : %lu istride : %d \n", nfft_, nbatch, istride);
+
+    //get_gpu_mem_info("right before creating fft plan");
+    //clock_gettime(CLOCK_MONOTONIC, &stop);
+    //create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, cufft_config.nbatch, cufft_config.fft_type);
+    //clock_gettime(CLOCK_MONOTONIC, &stop);
+    //get_gpu_mem_info("right after creating fft plan");
+
+    //fprintf(stderr, "...done (in %lu nanosec) : nfft : %lu nbatch : %lu istride : %d \n", cufft_config.nfft_, cufft_config.nbatch, cufft_config.istride, ELAPSED_NS(start, stop));
 
     return 0;
 }
@@ -136,7 +134,7 @@ static void *run(hashpipe_thread_args_t * args)
     init_device(gpu_dev);
 	char gpu_sem_name[256];
 	sem_t * gpu_sem;
-	sprintf(gpu_sem_name, "gpu_sem_device_%d", gpu_dev);
+	sprintf(gpu_sem_name, "serendip6_gpu_sem_device_%d", gpu_dev);
 	gpu_sem = sem_open(gpu_sem_name, O_CREAT, S_IRWXU, 1);
 	
     
@@ -260,7 +258,6 @@ fprintf(stderr, "num_coarse_chan = %lu n_bytes_per_bors = %lu  bors addr = %p\n"
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
                                      &db_out->block[curblock_out],                  // s6_output_block
                                      dv_p,                                          // dv_p
-                                     fft_plan_p,                                    // fft_plan
 									 gpu_sem);										// semaphore to serialize GPU access
 #else
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc   
@@ -276,7 +273,7 @@ fprintf(stderr, "num_coarse_chan = %lu n_bytes_per_bors = %lu  bors addr = %p\n"
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
                                      &db_out->block[curblock_out],                  // s6_output_block
                                      dv_p,                                          // dv_p
-                                     fft_plan_p);                                   // fft_plan
+									 gpu_sem);										// semaphore to serialize GPU access
 #endif
 
 //fprintf(stderr, "spectroscopy() returned %ld for beam %d\n", nhits, beam_i);

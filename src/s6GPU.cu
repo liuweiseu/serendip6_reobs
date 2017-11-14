@@ -1,8 +1,4 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <semaphore.h>
-
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -49,6 +45,8 @@ using std::endl;
 #else
     bool track_gpu_memory=false;
 #endif
+
+cufft_config_t cufft_config;
 
 //int init_device_vectors(int n_element, int n_input, device_vectors_t &dv) {
 device_vectors_t * init_device_vectors(int n_element_max, int n_element_utilized, int n_input) {
@@ -123,7 +121,7 @@ void create_fft_plan_1d(cufftHandle* plan,
                             int          idist,
                             int          ostride,
                             int          odist,
-                            size_t       nfft_,
+                            int          nfft_,
                             size_t       nbatch,
 							cufftType    fft_type) {
 
@@ -666,7 +664,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
                  device_vectors_t    *dv_p,
-                 cufftHandle *fft_plan) {
+				 sem_t * gpu_sem) {
 
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
 // channels (eg, at AO). At other times we are passed a subspectrum of channels  
@@ -714,6 +712,8 @@ int spectroscopy(int n_cc,         		// N coarse chans
     if(use_timer) cout << "H2D time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
+	sem_wait(gpu_sem);
+
     if(use_timer) timer.start();
     // Unpack from 8-bit to floats
     thrust::transform(dv_p->raw_timeseries_p->begin(), 
@@ -734,7 +734,16 @@ int spectroscopy(int n_cc,         		// N coarse chans
     float2* fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
     float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
 
-    do_fft                      (fft_plan, fft_input_ptr, fft_output_ptr);
+    // FFT. We create and destroy the cufft plan each time around in order to
+    // conserve the considerable amount of GPU memory that the plan requires. 
+    if(use_timer) timer.start();
+    create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
+                       cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
+                       cufft_config.nbatch, cufft_config.fft_type);             // plan FFT
+    if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
+    if(use_timer) timer.reset();
+    do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
+    cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
     compute_power_spectrum      (dv_p);
 
@@ -805,6 +814,8 @@ int spectroscopy(int n_cc,         		// N coarse chans
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
     
+	sem_post(gpu_sem);
+
     return total_nhits;
 }
 #endif
@@ -823,7 +834,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
                  device_vectors_t    *dv_p,
-                 cufftHandle *fft_plan,
 				 sem_t * gpu_sem) {
 
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
@@ -846,11 +856,13 @@ int spectroscopy(int n_cc, 				// N coarse chans
     int n_element = n_cc*n_fc;       // number of elements in GPU structures
     size_t nhits;
     size_t total_nhits=0;
+    cufftHandle fft_plan;
+    cufftHandle *fft_plan_p = &fft_plan;
 
     if(track_gpu_memory) {
         char comment[256];
-        sprintf(comment, "on entry to FAST spectroscopy() : n_pol = %d n_element = %d n_input_data_bytes = %lu raw_timeseries_length in bytes = %lu input data located at %p", 
-                n_pol, n_element, n_input_data_bytes,  n_input_data_bytes, input_data);
+        sprintf(comment, "on entry to FAST spectroscopy() : n_pol = %d n_element = %d raw_timeseries_length in bytes = %lu (%3.2lf gigasamples) input data located at %p", 
+                n_pol, n_element, n_input_data_bytes, (double)n_input_data_bytes/1024/1024/1024, input_data);
         get_gpu_mem_info((const char *)comment);
     }
 
@@ -870,7 +882,11 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_timer) cout << "H2D time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
+    if(use_timer) timer.start();
 	sem_wait(gpu_sem);
+    if(use_timer) timer.stop();
+    if(use_timer) cout << "sem wait time:\t" << timer.getTime() << endl;
+    if(use_timer) timer.reset();
 
     // all processing done per pol
     for(int pol=0; pol < n_pol; pol++) {
@@ -937,8 +953,18 @@ fprintf(stderr, "on pol %d\n", pol);
         float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
         float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
 
-        do_r2c_fft                      (fft_plan, fft_input_ptr, fft_output_ptr);      // compute FFT
+        // FFT. We create and destroy the cufft plan each time around in order to
+        // conserve the considerable amount of GPU memory that the plan requires. 
+        if(use_timer) timer.start();
+        create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
+                           cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
+                           cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
+        if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
+        if(use_timer) timer.reset();
+        do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
+        cufftDestroy(*fft_plan_p);
         if(track_gpu_memory) get_gpu_mem_info("right after FFT");
+
         compute_power_spectrum      (dv_p);                                         // compute power spectrum
 
         // done with the timeseries and FFTs - delete the associated GPU memory
@@ -1071,6 +1097,7 @@ cudaThreadSynchronize();
 
 	sem_post(gpu_sem);
     
+    if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;
 }
 #endif

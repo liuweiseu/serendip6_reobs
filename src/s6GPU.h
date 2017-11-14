@@ -1,9 +1,6 @@
 #ifndef _S6GPU_H
 #define _S6GPU_H
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <semaphore.h>
 
 #include <vector_functions.h>
@@ -18,8 +15,18 @@
 #include "s6_databuf.h"
 
 typedef struct {
+    int  nfft_;             // FFT length
+	cufftType fft_type;     // complex to complex or real to complex
+    size_t  nbatch;         // number of FFT batches to do (only FFT the utilized chans)      
+    int     istride;        // this can effectively transpose the input data (must stride over all (max) chans)
+    int     ostride;        // normally no transpose needed on the output
+    int     idist;          // distance between 1st input elements of consecutive batches
+    int     odist;          // distance between 1st output elements of consecutive batches
+} cufft_config_t;
+
+typedef struct {
 #ifdef SOURCE_FAST
-    thrust::device_vector<float> * fft_data_p;              // 
+    thrust::device_vector<float> * fft_data_p;             
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
 
 //#ifdef TRANSPOSE
@@ -36,7 +43,7 @@ typedef struct {
 
 #endif	// ifdef SOURCE_FAST
 
-    thrust::device_vector<float2> * fft_data_out_p;         // 
+    thrust::device_vector<float2> * fft_data_out_p;         
     thrust::device_vector<float>  * powspec_p;              // detected power spectra
     thrust::device_vector<float>  * scanned_p;              // mean powers
     thrust::device_vector<float>  * baseline_p;             // running mean by region, using scanned_p
@@ -81,7 +88,6 @@ int spectroscopy(int n_cc,
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
                  device_vectors_t    *dv_p,
-                 cufftHandle *fft_plan,
 				 sem_t * gpu_sem);
 
 #if 0
