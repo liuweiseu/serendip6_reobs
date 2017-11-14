@@ -44,7 +44,11 @@
 // TODO - put these in s6_databuf.h ?
 static const uint64_t     Nm = N_TIME_SAMPLES / N_SPECTRA_PER_PACKET;
 static const unsigned int N_PACKETS_PER_BLOCK = Nm * N_BEAMS;           // for GBT, this is just Nm
-static const unsigned int N_BYTES_PER_CHAN = 4;
+#ifdef SOURCE_FAST
+static const unsigned int N_BYTES_PER_CHAN = 1;     // real 8 bit samples for one pol
+#else
+static const unsigned int N_BYTES_PER_CHAN = 4;     // complex 8 bit samples for two pols
+#endif
 
 typedef struct {
     uint64_t mcnt;
@@ -78,8 +82,8 @@ static void print_pkt_header(packet_header_t * pkt_header) {
 
     static long long prior_mcnt;
 
-    printf("packet header : mcnt %012lx (diff from prior %lld) pchan %lud sid %lu\n",
-	   pkt_header->mcnt, pkt_header->mcnt-prior_mcnt, pkt_header->pchan, pkt_header->sid);
+    printf("packet header : mcnt %012lx (diff from prior %lld) pchan %lu sid %lu (%lx)\n",
+	   pkt_header->mcnt, pkt_header->mcnt-prior_mcnt, pkt_header->pchan, pkt_header->sid,  pkt_header->sid);
 
     prior_mcnt = pkt_header->mcnt;
 }
@@ -188,19 +192,25 @@ static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t
 static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_header)
 {
     uint64_t raw_header;
-    raw_header = be64toh(*(unsigned long long *)PKT_UDP_DATA(p_frame));
 #ifdef SOURCE_S6
+    raw_header = be64toh(*(unsigned long long *)PKT_UDP_DATA(p_frame)); // convert to little endian
     pkt_header->mcnt        =  raw_header >> 16;
     pkt_header->pchan       = (raw_header >>  4) & 0x0000000000000FFF;
     pkt_header->sid         =  raw_header        & 0x000000000000000F;
 #elif SOURCE_DIBAS
+    raw_header = be64toh(*(unsigned long long *)PKT_UDP_DATA(p_frame)); // convert to little endian
     pkt_header->pchan       =  (raw_header >> 56) * N_COARSE_CHAN;  // node ID converted to pchan. 
     pkt_header->mcnt        =  raw_header & 0x00FFFFFFFFFFFFFF;
     pkt_header->sid         =  raw_header >> 56;
 #elif SOURCE_FAST
+    raw_header = *(unsigned long long *)PKT_UDP_DATA(p_frame);          // already little endian
     pkt_header->pchan       =  0;				// not coarse channelized, ie 1 coarse channel
     pkt_header->mcnt        =  raw_header & 0x00FFFFFFFFFFFFFF;	// "serial number" in FAST parlance
-    pkt_header->sid         =  raw_header >> 56;		// source ID
+    unsigned char raw_sid   =  raw_header >> 56;
+    unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
+    unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
+    pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc
+//print_pkt_header(pkt_header);
 #endif
 
 #ifdef SOURCE_S6
@@ -678,16 +688,14 @@ static inline uint64_t process_packet(
 static int init(hashpipe_thread_args_t *args)
 {
     /* Read network params */
-    char bindhost[80];
+    char bindhost[80];  // *must* come from status shmem which in turn comes from cmd line
 #ifdef SOURCE_S6
     int bindport = 21302;
 #elif SOURCE_DIBAS
     int bindport = 60000;
 #elif SOURCE_FAST
-    int bindport = 60000;
+    int bindport = 12345;
 #endif
-
-    strcpy(bindhost, "eth3");
 
     hashpipe_status_t st = args->st;
 
@@ -865,7 +873,7 @@ static void *run(hashpipe_thread_args_t * args)
         if (packet_size < 16 || max_packet_size < packet_size || packet_size % 8 != 0) {
 	    // Log warning and ignore wrongly sized packet
 	    #ifdef DEBUG_NET
-	    hashpipe_warn("s6_pktsock_thread", "Invalid pkt size (%d)", packet_size);
+	    hashpipe_warn("s6_pktsock_thread", "Invalid pkt size (%d) %d", packet_size, max_packet_size);
 	    #endif
 	    continue;
 	}

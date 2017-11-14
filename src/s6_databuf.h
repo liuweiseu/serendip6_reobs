@@ -17,11 +17,12 @@
 // N_COARSE_CHAN needs to be evenly divisible by 32 in order for each time sample
 // ("row" of coarse chans) to be 256 bit aligned.  256 bit alignment is required by
 // the "non-temporal" memory copy. 
-#define N_POLS_PER_BEAM         2
+//#define N_POLS_PER_BEAM         2
 //#define N_BYTES_PER_SAMPLE      2
 
 #ifdef SOURCE_S6
 // channelized complex input
+#define N_POLS_PER_BEAM             2
 #define N_BYTES_PER_SAMPLE      	2
 #define N_BEAMS                     7
 #define N_BEAM_SLOTS                8
@@ -37,6 +38,7 @@
 
 #elif SOURCE_DIBAS
 // channelized complex input
+#define N_POLS_PER_BEAM             2
 #define N_BYTES_PER_SAMPLE      	2
 #define N_BEAMS                     1
 #define N_BEAM_SLOTS                1
@@ -52,13 +54,14 @@
 
 #elif SOURCE_FAST
 // non-channelized real input
+#define N_POLS_PER_BEAM             1
 #define N_BYTES_PER_SAMPLE      	1
 #define N_BEAMS                     1
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
 #define N_TIME_SAMPLES              ((uint64_t) 512*1024*1024)               
 #define N_FINE_CHAN 				(N_TIME_SAMPLES/2 + 1)                
-#define N_SPECTRA_PER_PACKET        4
+#define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
 #define N_BORS                      (N_SUBSPECTRA_PER_SPECTRUM)
