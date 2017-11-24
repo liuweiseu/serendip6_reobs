@@ -39,6 +39,8 @@ using std::endl;
 #else
     bool use_total_gpu_timer=false;
 #endif
+float sum_of_times;
+
 #define TRACK_GPU_MEMORY
 #ifdef TRACK_GPU_MEMORY
     bool track_gpu_memory=true;
@@ -375,6 +377,7 @@ void do_fft(cufftHandle *fft_plan, float2* &fft_input_ptr, float2* &fft_output_p
     execute_fft_plan_c2c(fft_plan, fft_input_ptr, fft_output_ptr);
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "FFT execution time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 }
@@ -384,6 +387,7 @@ void do_r2c_fft(cufftHandle *fft_plan, float* &fft_input_ptr, float2* &fft_outpu
     execute_fft_plan_r2c(fft_plan, fft_input_ptr, fft_output_ptr);
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "FFT execution time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 }
@@ -400,6 +404,7 @@ void compute_power_spectrum(device_vectors_t *dv_p) {
 //fprintf(stderr, "In compute_power_spectrum 3\n");
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Power spectrum time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 }
@@ -453,6 +458,7 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
                                   dv_p->scanned_p->begin());
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Scan time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after scan");
@@ -468,9 +474,11 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
                                              d_scanned_ptr));
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Running mean time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after running mean by region");
+    //thrust::for_each(dv_p->baseline_p->begin(), dv_p->baseline_p->end(), printf_functor());
 }
 
 void normalize_power_spectrum(device_vectors_t *dv_p) {
@@ -484,6 +492,7 @@ void normalize_power_spectrum(device_vectors_t *dv_p) {
                       thrust::divides<float>());
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Normalisation time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 }
@@ -515,6 +524,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
                                             
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Hit extraction time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
     
@@ -530,6 +540,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
                    dv_p->hit_baselines_p->begin());
     cudaThreadSynchronize();
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Hit info gather time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -573,6 +584,7 @@ int reduce_coarse_channels(device_vectors_t * dv_p,
     if(track_gpu_memory) get_gpu_mem_info("right after vector deletion for coarse channel reduction");
 
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Reduce coarse channels time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -617,6 +629,7 @@ int reduce_coarse_channels(device_vectors_t * dv_p,
     if(track_gpu_memory) get_gpu_mem_info("right after vector deletion for coarse channel reduction");
 
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Reduce coarse channels time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -709,6 +722,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
                  dv_p->raw_timeseries_p->begin());
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "H2D time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -723,6 +737,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
     cudaThreadSynchronize();
     if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Unpack time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
     
@@ -740,6 +755,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
     create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                        cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
                        cufft_config.nbatch, cufft_config.fft_type);             // plan FFT
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
     do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
@@ -807,6 +823,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
     delete(dv_p->normalised_p);       
        
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "Copy to return vector time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -844,7 +861,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
 // Note - GPU memory allocation.  Our total memory needs are larger than the
 // capcity of our current GPU (GeForce GTX 780 Ti with 3071MB). So we allocate 
 // as needed and delete memory as soon as it is no longer needed.
-//#define USE_CLEAR_AND_SWAP
+#define USE_CLEAR_AND_SWAP
 #ifdef USE_CLEAR_AND_SWAP
 	fprintf(stderr, "Using clear & swap memory de/re-allocation\n");
 #else
@@ -858,6 +875,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
     size_t total_nhits=0;
     cufftHandle fft_plan;
     cufftHandle *fft_plan_p = &fft_plan;
+
+    sum_of_times=0;
 
     if(track_gpu_memory) {
         char comment[256];
@@ -879,12 +898,14 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  dv_p->raw_timeseries_p->begin());
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "H2D time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
     if(use_timer) timer.start();
 	sem_wait(gpu_sem);
     if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
     if(use_timer) cout << "sem wait time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
@@ -929,7 +950,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
         // see https://github.com/thrust/thrust/blob/master/examples/strided_range.cu
         // TODO : TEST
         // TODO : Am I actaully getting the 2nd pol here???
-fprintf(stderr, "on pol %d\n", pol);
         typedef thrust::device_vector<char>::iterator Iterator;
         strided_range<Iterator> this_pol(dv_p->raw_timeseries_p->begin() + pol, dv_p->raw_timeseries_p->end(), 2);
         if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float strided iterator allocation for pol");
@@ -941,6 +961,7 @@ fprintf(stderr, "on pol %d\n", pol);
         cudaThreadSynchronize();
         if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
         if(use_timer) timer.stop();
+        sum_of_times += timer.getTime();
         if(use_timer) cout << "Unpack time:\t" << timer.getTime() << endl;
         if(use_timer) timer.reset();
         // end fluffing to FFT input
@@ -959,6 +980,8 @@ fprintf(stderr, "on pol %d\n", pol);
         create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                            cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
                            cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
+        if(use_timer) timer.stop();
+        sum_of_times += timer.getTime();
         if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
         if(use_timer) timer.reset();
         do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
@@ -1054,6 +1077,7 @@ cudaThreadSynchronize();
             //        s6_output_block->fine_chan[bors][i], s6_output_block->power[bors][i]);
         } // end for i<nhits 
     	if(use_timer) timer.stop();
+        sum_of_times += timer.getTime();
     	if(use_timer) cout << "Copy to return vector time:\t" << timer.getTime() << endl;
     	if(use_timer) timer.reset();
 #endif
@@ -1091,8 +1115,10 @@ cudaThreadSynchronize();
 
     delete(dv_p->raw_timeseries_p);   
 
+    fprintf(stdout, "sum of times:\t %f\n", sum_of_times);
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
+    fprintf(stdout, "Uncounted time:\t %f\n\n", total_gpu_timer.getTime() - sum_of_times);
     if(use_total_gpu_timer) total_gpu_timer.reset();
 
 	sem_post(gpu_sem);
