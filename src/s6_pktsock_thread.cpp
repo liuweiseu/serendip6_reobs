@@ -207,6 +207,7 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
     pkt_header->pchan       =  0;				// not coarse channelized, ie 1 coarse channel
     pkt_header->mcnt        =  raw_header & 0x00FFFFFFFFFFFFFF;	// "serial number" in FAST parlance
     unsigned char raw_sid   =  raw_header >> 56;
+//fprintf(stdout, "raw sid %x\n", raw_sid);
     unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
     unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
     pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc
@@ -607,11 +608,13 @@ static inline uint64_t process_packet(
 #elif SOURCE_FAST	// end SOURCE_DIBAS 
     const uint64_t *src_p = payload_p;
     dest_p = s6_input_databuf_p->block[pkt_block_i].data    // start of block
-       	+ pkt_mcnt % Nm;				// offset within block 
-			
-    // Use length from packet (minus UDP header and minus HEADER word and minus CRC word)
-    memcpy(dest_p, payload_p, PKT_UDP_SIZE(p_frame) - 8 - 8 - 8);
-#endif
+       	+ pkt_mcnt % Nm * N_SPECTRA_PER_PACKET;				// offset within block 
+    //fprintf(stderr, "data start %p dest_p %p memcpy size %lu pkt_mcnt %lu Nm %lu offset %lu\n", 
+    //        s6_input_databuf_p->block[pkt_block_i].data, dest_p, (size_t)(PKT_UDP_SIZE(p_frame) - 8 - 8), 
+    //        pkt_mcnt, Nm, pkt_mcnt % Nm * N_SPECTRA_PER_PACKET);
+    // Use length from packet (minus UDP header and minus HEADER word (no CRC word))
+    memcpy(dest_p, payload_p, PKT_UDP_SIZE(p_frame) - 8 - 8);
+#endif              // end SOURCE_FAST
 
 	return netmcnt;
     }
