@@ -120,18 +120,6 @@ static void *run(hashpipe_thread_args_t * args)
 			for(uint64_t i = 0; i <  N_TIME_SAMPLES; i++) cdata[i] = i % (N_TIME_SAMPLES / 512);
 #endif
             fprintf(stderr, "done generating fake data to block 0 beam 0\n");
-//for(int jeffc2=0; jeffc2 < 8; jeffc2++) {
-//fprintf(stderr, "bors %d pol %d ++++++++++++ in fake net +++++++++++++++++++++\n", bors_i, input_i);
-//for(int jeffc=0; jeffc<20; jeffc++) {
-//fprintf(stderr, ">>>> %d %d %d %d\n", c2data[jeffc].x, c2data[jeffc].y, c2data[jeffc].x, c2data[jeffc].y);
-//}
-            //fprintf(stderr, "copying to block 0 beam");
-            //for(int beam_i = 1; beam_i < N_BEAMS; beam_i++) {
-            //    fprintf(stderr, " %d", beam_i);
-            //    memcpy((void *)&db->block[0].data[beam_i*N_BYTES_PER_BEAM/sizeof(uint64_t)], 
-            //        (void *)&db->block[0].data[0], 
-            //        N_BYTES_PER_BEAM);
-            //}
             for(int block_i = 1; block_i < N_INPUT_BLOCKS; block_i++) {
                 fprintf(stderr, "copying fake data to block %d\n", block_i);
                 memcpy((void *)&db->block[block_i].data[0], 

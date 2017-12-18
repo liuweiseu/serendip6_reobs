@@ -221,18 +221,16 @@ static void *run(hashpipe_thread_args_t * args)
             // spectroscopy() writes directly to the output buffer.
             size_t total_hits = 0;
 #ifdef SOURCE_S6
-            // At AO, data are arrayed by beam
+            // At AO, data are grouped by beam
             int n_bors = N_BEAMS;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_BEAM;
 #elif SOURCE_DIBAS
-            // At GBT, data are arrayed by subspectra
+            // At GBT, data are grouped by subspectra
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
-            //int n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_FINE_CHAN;
 #elif SOURCE_FAST
-            // At FAST, data are arrayed by TBD
+            // At FAST, data are not grouped
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
-            //int n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
 #endif
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {

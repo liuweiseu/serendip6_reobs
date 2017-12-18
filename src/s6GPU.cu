@@ -1058,10 +1058,10 @@ cudaThreadSynchronize();
 
     delete(dv_p->raw_timeseries_p);   
 
-    fprintf(stdout, "sum of times:\t %f\n", sum_of_times);
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
-    fprintf(stdout, "Uncounted time:\t %f\n\n", total_gpu_timer.getTime() - sum_of_times);
+    if(use_total_gpu_timer) cout << "Sum of times:\t" << sum_of_times << endl;
+    if(use_total_gpu_timer) cout << "Uncounted time:\t" << total_gpu_timer.getTime() - sum_of_times << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
 
 	sem_post(gpu_sem);
