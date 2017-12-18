@@ -27,8 +27,8 @@ using std::endl;
 #include "hashpipe.h"
 #include <time.h>
 
-#define USE_TIMER
-#define USE_TOTAL_GPU_TIMER
+//#define USE_TIMER
+//#define USE_TOTAL_GPU_TIMER
 #ifdef USE_TIMER
     bool use_timer=true;
 #else
@@ -41,7 +41,7 @@ using std::endl;
 #endif
 float sum_of_times;
 
-#define TRACK_GPU_MEMORY
+//#define TRACK_GPU_MEMORY
 #ifdef TRACK_GPU_MEMORY
     bool track_gpu_memory=true;
 #else
@@ -881,6 +881,15 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     char * h_raw_timeseries = (char *)input_data;
 
+//#define DUMP_RAW_SAMPLES
+#ifdef DUMP_RAW_SAMPLES
+    static int cnt = 0;
+    if(cnt++ == 10) {                                                       // wait for 10 buffers to nake sure we are settled
+        int num_samples_to_dump = 8*1024;
+        for(int i=0; i < num_samples_to_dump; i++) printf("%d\n", h_raw_timeseries[i]);   
+    }
+#endif
+
     if(use_total_gpu_timer) total_gpu_timer.start();
 
     // we allocate the device raw data vector for both pols at once so that we can do the copy in one go
@@ -1019,14 +1028,16 @@ cudaThreadSynchronize();
             s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
             s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
 #elif SOURCE_FAST
-// TODO place holder for now
-            s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
-            s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
+            s6_output_block->pol[bors][i]         = pol;    // TODO pol should get passed in    
+            s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
 #endif
             s6_output_block->fine_chan[bors][i]   = hit_index % n_fc;
-            //fprintf(stderr, "hit_index %ld spectrum_index %ld pol %d cchan %d fchan %d power %f\n", 
-            //        hit_index, spectrum_index, s6_output_block->pol[bors][i], s6_output_block->coarse_chan[bors][i], 
-            //        s6_output_block->fine_chan[bors][i], s6_output_block->power[bors][i]);
+//#define PRINT_HIT_INFO
+#ifdef PRINT_HIT_INFO
+            fprintf(stderr, "bors %d i %d hit_index %ld spectrum_index %ld pol %d cchan %d fchan %d power %f\n", 
+                    bors, i, hit_index, spectrum_index, s6_output_block->pol[bors][i], s6_output_block->coarse_chan[bors][i], 
+                    s6_output_block->fine_chan[bors][i], s6_output_block->power[bors][i]);
+#endif
         } // end for i<nhits 
     	if(use_timer) timer.stop();
         sum_of_times += timer.getTime();
