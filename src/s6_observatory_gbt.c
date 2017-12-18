@@ -4,6 +4,7 @@
 #include <string.h>
 #include "mysql.h"
 #include <fcntl.h>
+#include <time.h>
 
 #include<sys/socket.h>
 #include<arpa/inet.h>
