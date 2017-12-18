@@ -37,7 +37,10 @@ static void *run(hashpipe_thread_args_t * args)
     int block_idx = 0;
     int error_count = 0, max_error_count = 0;
     float error, max_error = 0.0;
-    int gen_fake = 1;
+    int gen_fake = 0;		// set this to 1 to turn on fake data generation
+                            //  Once data have been generated of an input
+                            //  ring buffer, no need to regenerate until
+                            //  buffers are removed.
 
     hashpipe_status_lock_safe(&st);
     //hashpipe_status_lock_safe(p_st);
@@ -102,12 +105,21 @@ static void *run(hashpipe_thread_args_t * args)
 
         if(gen_fake) {
             gen_fake = 0;
-            // gen fake data for all beams, all blocks   
             // All blocks will contain same fake data.
             // TODO vary data by beam
-            fprintf(stderr, "generating fake data to block 0 beam 0...");
+#define SLOW_GEN
+#ifdef SLOW_GEN 
+            // Slow : gen fake data (with signals) for all beams, all blocks   
+            fprintf(stderr, "slowly generating fake data (sine waves) to block 0 beam 0...\n");
             gen_fake_data(&(db->block[0].data[0]));
-            fprintf(stderr, " done\n");
+#else
+			// Fast : quick and dirty data gen - saw tooth
+            fprintf(stderr, "quickly generating fake data (saw tooth) to block 0 beam 0...\n");
+			char * cdata;
+			cdata = (char *)&(db->block[0].data[i]); 
+			for(uint64_t i = 0; i <  N_TIME_SAMPLES; i++) cdata[i] = i % (N_TIME_SAMPLES / 512);
+#endif
+            fprintf(stderr, "done generating fake data to block 0 beam 0\n");
 //for(int jeffc2=0; jeffc2 < 8; jeffc2++) {
 //fprintf(stderr, "bors %d pol %d ++++++++++++ in fake net +++++++++++++++++++++\n", bors_i, input_i);
 //for(int jeffc=0; jeffc<20; jeffc++) {
@@ -120,15 +132,12 @@ static void *run(hashpipe_thread_args_t * args)
             //        (void *)&db->block[0].data[0], 
             //        N_BYTES_PER_BEAM);
             //}
-            fprintf(stderr, " done\n");
-            fprintf(stderr, "copying to block");
             for(int block_i = 1; block_i < N_INPUT_BLOCKS; block_i++) {
-                fprintf(stderr, " %d", block_i);
+                fprintf(stderr, "copying fake data to block %d\n", block_i);
                 memcpy((void *)&db->block[block_i].data[0], 
                     (void *)&db->block[0].data[0], 
                     N_DATA_BYTES_PER_BLOCK);
             }
-            fprintf(stderr, " done\n");
         }
 
         hashpipe_status_lock_safe(&st);
