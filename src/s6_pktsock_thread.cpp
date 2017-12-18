@@ -607,11 +607,14 @@ static inline uint64_t process_packet(
     }
 #elif SOURCE_FAST	// end SOURCE_DIBAS 
     const uint64_t *src_p = payload_p;
-    dest_p = s6_input_databuf_p->block[pkt_block_i].data    // start of block
-       	+ pkt_mcnt % Nm * N_SPECTRA_PER_PACKET;				// offset within block 
-    //fprintf(stderr, "data start %p dest_p %p memcpy size %lu pkt_mcnt %lu Nm %lu offset %lu\n", 
-    //        s6_input_databuf_p->block[pkt_block_i].data, dest_p, (size_t)(PKT_UDP_SIZE(p_frame) - 8 - 8), 
-    //        pkt_mcnt, Nm, pkt_mcnt % Nm * N_SPECTRA_PER_PACKET);
+    dest_p = s6_input_databuf_p->block[pkt_block_i].data            // start of block
+        + pkt_mcnt % Nm * N_SPECTRA_PER_PACKET/sizeof(uint64_t);    // offset within block 
+//#define PRINT_PACKET_PLACEMENT_INFO
+#ifdef PRINT_PACKET_PLACEMENT_INFO
+    fprintf(stderr, "DBPB %lu data start %p dest_p %p memcpy size %lu pkt_mcnt %lu Nm %lu offset %lu\n", 
+            N_DATA_BYTES_PER_BLOCK, s6_input_databuf_p->block[pkt_block_i].data, dest_p, (size_t)(PKT_UDP_SIZE(p_frame) - 8 - 8), 
+            pkt_mcnt, Nm, pkt_mcnt % Nm * N_SPECTRA_PER_PACKET);
+#endif
     // Use length from packet (minus UDP header and minus HEADER word (no CRC word))
     memcpy(dest_p, payload_p, PKT_UDP_SIZE(p_frame) - 8 - 8);
 #endif              // end SOURCE_FAST
