@@ -936,7 +936,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
         // TODO : TEST
         // TODO : Am I actaully getting the 2nd pol here???
         typedef thrust::device_vector<char>::iterator Iterator;
-        strided_range<Iterator> this_pol(dv_p->raw_timeseries_p->begin() + pol, dv_p->raw_timeseries_p->end(), 2);
+        strided_range<Iterator> this_pol(dv_p->raw_timeseries_p->begin() + pol, dv_p->raw_timeseries_p->end(), N_POLS_PER_BEAM);
         if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float strided iterator allocation for pol");
         thrust::transform(
                       this_pol.begin(),  
