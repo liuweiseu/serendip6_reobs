@@ -35,6 +35,7 @@
 #define N_BORS                      (N_BEAMS)
 #define N_SOURCE_NODES              (N_BEAMS)
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN)
+#define SMOOTH_SCALE                1024
 
 #elif SOURCE_DIBAS
 // channelized complex input
@@ -51,6 +52,7 @@
 #define N_BORS                      (N_SUBSPECTRA_PER_SPECTRUM)
 #define N_SOURCE_NODES              8
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
+#define SMOOTH_SCALE                1024
 
 #elif SOURCE_FAST
 // non-channelized real input
@@ -60,6 +62,7 @@
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
 #define N_TIME_SAMPLES              ((uint64_t) 512*1024*1024)               
+//#define N_TIME_SAMPLES              ((uint64_t) 1024*1024)               
 #define N_FINE_CHAN 				(N_TIME_SAMPLES/2 + 1)                
 #define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1
@@ -67,6 +70,7 @@
 #define N_BORS                      (N_SUBSPECTRA_PER_SPECTRUM)
 #define N_SOURCE_NODES              8
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
+#define SMOOTH_SCALE                (8*1024)
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
@@ -77,7 +81,6 @@
 #define N_BYTES_PER_SUBSPECTRUM (N_BYTES_PER_SAMPLE * N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM)
 #define N_DATA_BYTES_PER_BLOCK  (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BLOCK)
 
-#define SMOOTH_SCALE            1024
 #define POWER_THRESH            20.0
 #define MIN_POWER_THRESH        10.0
 #define MAXGPUHITS              ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
