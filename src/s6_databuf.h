@@ -109,7 +109,8 @@ typedef struct s6_input_block_header {
   uint64_t mcnt;                    // mcount of first packet
   uint64_t coarse_chan_id;          // coarse channel number of lowest channel in this block
   uint64_t num_coarse_chan;         // number of actual coarse channels (<= N_COARSE_CHAN)
-  uint64_t missed_pkts[N_BORS];    // missed per beam - this block or this run? TODO
+  uint64_t sid;                     // source ID
+  uint64_t missed_pkts[N_BORS];     // missed per beam - this block or this run? TODO
 } s6_input_block_header_t;
 
 typedef uint8_t s6_input_header_cache_alignment[
