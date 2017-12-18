@@ -78,7 +78,7 @@ void create_fft_plan_1d(cufftHandle* plan,
 int spectroscopy(int n_cc,
                  int n_fc,
                  int n_ts,
-                 int n_pol,
+                 int n_pol, // either the pol itself or the number of pols
                  int beam,
                  size_t maxhits,
                  size_t maxgpuhits,

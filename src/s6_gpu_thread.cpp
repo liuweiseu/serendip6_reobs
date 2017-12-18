@@ -238,15 +238,16 @@ static void *run(hashpipe_thread_args_t * args)
                 // TODO there is no real c error checking in spectroscopy()
                 //      Errors are handled via c++ exceptions
 #if 0
-fprintf(stderr, "num_coarse_chan = %lu n_bytes_per_bors = %lu  bors addr = %p\n", 
-        num_coarse_chan, n_bytes_per_bors, &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
+fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bors addr = %p\n", 
+        db_in->block[curblock_in].header.sid % 2, num_coarse_chan, n_bytes_per_bors, 
+        &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
 #endif
 
 #ifdef SOURCE_FAST
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
                                      N_FINE_CHAN,                                   // n_fc    
                                      N_TIME_SAMPLES,                                // n_ts
-                                     N_POLS_PER_BEAM,                               // n_pol     
+                                     db_in->block[curblock_in].header.sid % 2,      // n_pol, the pol itself, one per data strem
                                      bors_i,                                        // bors         
                                      maxhits,                                       // maxhits
                                      MAXGPUHITS,                                    // maxgpuhits

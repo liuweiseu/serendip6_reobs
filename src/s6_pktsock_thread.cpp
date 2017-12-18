@@ -83,7 +83,7 @@ static void print_pkt_header(packet_header_t * pkt_header) {
     static long long prior_mcnt;
 
     printf("packet header : mcnt %012lx (diff from prior %lld) pchan %lu sid %lu (%lx)\n",
-	   pkt_header->mcnt, pkt_header->mcnt-prior_mcnt, pkt_header->pchan, pkt_header->sid,  pkt_header->sid);
+	   pkt_header->mcnt, pkt_header->mcnt-prior_mcnt, pkt_header->pchan, pkt_header->sid,  pkt_header->sid % 2);
 
     prior_mcnt = pkt_header->mcnt;
 }
@@ -210,7 +210,7 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
 //fprintf(stdout, "raw sid %x\n", raw_sid);
     unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
     unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
-    pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc
+    pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
 //print_pkt_header(pkt_header);
 #endif
 
@@ -360,7 +360,7 @@ static inline int calc_block_indexes(block_info_t *binfo, packet_header_t * pkt_
 // as well, but that takes time and is largely unnecessary in a properly
 // functionong system.  If desired, it could be done by the downstream thread.
 static inline void initialize_block(s6_input_databuf_t * s6_input_databuf_p,
-	uint64_t mcnt, uint64_t pchan, uint64_t nchan)
+	uint64_t mcnt, uint64_t pchan, uint64_t nchan, uint64_t sid)
 {
     int i;
     int block_i = block_for_mcnt(mcnt);
@@ -375,6 +375,7 @@ static inline void initialize_block(s6_input_databuf_t * s6_input_databuf_p,
     // Save pchan and nchan
     s6_input_databuf_p->block[block_i].header.coarse_chan_id = pchan;
     s6_input_databuf_p->block[block_i].header.num_coarse_chan = nchan;
+    s6_input_databuf_p->block[block_i].header.sid = sid;
 }
 
 // This function must be called once and only once per block_info structure!
@@ -547,7 +548,7 @@ static inline uint64_t process_packet(
 	    }
 
 	    // Initialize the newly acquired block
-	    initialize_block(s6_input_databuf_p, pkt_mcnt+Nm, pkt_header.pchan, pkt_header.nchan);
+	    initialize_block(s6_input_databuf_p, pkt_mcnt+Nm, pkt_header.pchan, pkt_header.nchan, pkt_header.sid);
 	    // Reset binfo's packet counter for this packet's block
 	    binfo.block_packet_counter[new_block_i] = 0;
 	}
@@ -675,9 +676,9 @@ static inline uint64_t process_packet(
 	    // Reinitialize/recycle our two already acquired blocks with new
 	    // mcnt values.
 	    initialize_block(s6_input_databuf_p, binfo.mcnt_start,
-		    pkt_header.pchan, pkt_header.nchan);
+		    pkt_header.pchan, pkt_header.nchan, pkt_header.sid);
 	    initialize_block(s6_input_databuf_p, binfo.mcnt_start+Nm,
-		    pkt_header.pchan, pkt_header.nchan);
+		    pkt_header.pchan, pkt_header.nchan, pkt_header.sid);
 	    // Reset binfo's packet counters for these blocks.
 	    binfo.block_packet_counter[binfo.block_i] = 0;
 	    binfo.block_packet_counter[(binfo.block_i+1)%N_INPUT_BLOCKS] = 0;
@@ -806,8 +807,8 @@ static void *run(hashpipe_thread_args_t * args)
     }
 
     // Initialize the newly acquired block
-    initialize_block(db,  0, 0, 0);
-    initialize_block(db, Nm, 0, 0);
+    initialize_block(db,  0, 0, 0, 0);
+    initialize_block(db, Nm, 0, 0, 0);
 
     /* Read network params */
     int bindport = 21302;

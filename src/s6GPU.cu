@@ -869,6 +869,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     size_t total_nhits=0;
     cufftHandle fft_plan;
     cufftHandle *fft_plan_p = &fft_plan;
+    int pol = n_pol;                // for ease of code reading
 
     sum_of_times=0;
 
@@ -912,9 +913,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_timer) cout << "sem wait time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
-    // all processing done per pol
-    for(int pol=0; pol < n_pol; pol++) {
-
         // allocate (and delete - see below) for each pol
         dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
         dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
@@ -931,16 +929,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
         if(use_timer) timer.start();
 
-        // fluff 8 bit data to float while loading FFT input, one pol at a time via a strided iterator
-        // see https://github.com/thrust/thrust/blob/master/examples/strided_range.cu
-        // TODO : TEST
-        // TODO : Am I actaully getting the 2nd pol here???
-        typedef thrust::device_vector<char>::iterator Iterator;
-        strided_range<Iterator> this_pol(dv_p->raw_timeseries_p->begin() + pol, dv_p->raw_timeseries_p->end(), N_POLS_PER_BEAM);
-        if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float strided iterator allocation for pol");
-        thrust::transform(
-                      this_pol.begin(),  
-                      this_pol.end(),
+        // Unpack from 8-bit to floats
+        thrust::transform(dv_p->raw_timeseries_p->begin(), 
+                      dv_p->raw_timeseries_p->end(),
                       dv_p->fft_data_p->begin(),
                       convert_real_8b_to_float());
         cudaThreadSynchronize();
@@ -984,7 +975,6 @@ cudaThreadSynchronize();
         if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
 
         // reduce coarse channels to mean power...
-        // TODO : this has to be modified for per pol 
         reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
 
         // Allocate GPU memory for power normalization
@@ -996,7 +986,7 @@ cudaThreadSynchronize();
         if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
 
         // Power normalization
-        compute_baseline            (dv_p, n_fc, n_element, smooth_scale);        // not enough mem for this with 128m pt fft
+        compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
         if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
 cudaThreadSynchronize();
         delete(dv_p->scanned_p);          
@@ -1013,8 +1003,6 @@ cudaThreadSynchronize();
         total_nhits += nhits;
         s6_output_block->header.nhits[bors] = nhits;
         // We output both detected and mean powers (not S/N).
-# if 1  // two pols
-        // TODO : modify for per pol - currently the second pol's data will overwrite the first!
         thrust::copy(dv_p->hit_powers_p->begin(),    dv_p->hit_powers_p->end(),    &s6_output_block->power[bors][0]);      
         thrust::copy(dv_p->hit_baselines_p->begin(), dv_p->hit_baselines_p->end(), &s6_output_block->baseline[bors][0]);
         thrust::copy(dv_p->hit_indices_p->begin(),   dv_p->hit_indices_p->end(),   &s6_output_block->hit_indices[bors][0]);
@@ -1028,7 +1016,7 @@ cudaThreadSynchronize();
             s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
             s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
 #elif SOURCE_FAST
-            s6_output_block->pol[bors][i]         = pol;    // TODO pol should get passed in    
+            s6_output_block->pol[bors][i]         = pol;   
             s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
 #endif
             s6_output_block->fine_chan[bors][i]   = hit_index % n_fc;
@@ -1054,8 +1042,6 @@ cudaThreadSynchronize();
         delete(dv_p->hit_indices_p);  
         delete(dv_p->hit_powers_p); 
 
-    } // end loop through pols
-
     delete(dv_p->raw_timeseries_p);   
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
@@ -1069,4 +1055,3 @@ cudaThreadSynchronize();
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;
 }
-#endif
