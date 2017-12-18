@@ -141,9 +141,11 @@ void gen_fake_data(uint64_t *data) {
 #ifdef SOURCE_FAST
     std::vector<char>   h_raw_timeseries_gen(n_gpu_input_elements);
     char * c2data = (char *)data;       // input buffer pointer cast to char pointer
+    int sample_size = sizeof(char);
 #else 
     std::vector<char2>   h_raw_timeseries_gen(n_gpu_input_elements);
     char2 * c2data = (char2 *)data;     // input buffer pointer cast to char2 pointer
+    int sample_size = sizeof(char2);
 #endif
     int bors_i;
 
@@ -162,7 +164,8 @@ void gen_fake_data(uint64_t *data) {
                 long dst_locator  = bors_i * (long)N_COARSE_CHAN_PER_BORS * (long)N_TIME_SAMPLES * N_POLS_PER_BEAM +     // start of correct bors
                                     j*N_POLS_PER_BEAM+pol;                                  // offset w/in bors
                 if(do_print) {
-                    fprintf(stderr, "bors_i %d src %ld of %ld  dst %ld of %ld\n", bors_i, src_locator, h_raw_timeseries_gen.size(), dst_locator, N_DATA_BYTES_PER_BLOCK/sizeof(char2)); 
+                    fprintf(stderr, "bors_i %d src %ld of %ld  dst %ld of %ld\n", 
+                            bors_i, src_locator, h_raw_timeseries_gen.size(), dst_locator, N_DATA_BYTES_PER_BLOCK/sample_size); 
                     do_print--;
                 }
                 c2data[dst_locator] = h_raw_timeseries_gen[src_locator];
