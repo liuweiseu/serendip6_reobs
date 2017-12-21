@@ -913,144 +913,144 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_timer) cout << "sem wait time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
-        // allocate (and delete - see below) for each pol
-        dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
-        dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
-        dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
+    // allocate (and delete - see below) for each pol
+    dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
+    dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
+    dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
 
-        dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
-        if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
+    dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
-        dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
-        if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
+    dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
+    if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
 
-        dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
-        if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
+    dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
+    if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
 
-        if(use_timer) timer.start();
+    if(use_timer) timer.start();
 
-        // Unpack from 8-bit to floats
-        thrust::transform(dv_p->raw_timeseries_p->begin(), 
-                      dv_p->raw_timeseries_p->end(),
-                      dv_p->fft_data_p->begin(),
-                      convert_real_8b_to_float());
-        cudaThreadSynchronize();
-        if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
-        if(use_timer) timer.stop();
-        sum_of_times += timer.getTime();
-        if(use_timer) cout << "Unpack time:\t" << timer.getTime() << endl;
-        if(use_timer) timer.reset();
-        // end fluffing to FFT input
+    // Unpack from 8-bit to floats
+    thrust::transform(dv_p->raw_timeseries_p->begin(), 
+                  dv_p->raw_timeseries_p->end(),
+                  dv_p->fft_data_p->begin(),
+                  convert_real_8b_to_float());
+    cudaThreadSynchronize();
+    if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
+    if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
+    if(use_timer) cout << "Unpack time:\t" << timer.getTime() << endl;
+    if(use_timer) timer.reset();
+    // end fluffing to FFT input
     
-        // Input pointer varies with input.
-        // Output pointer is constant - we reuse the output area for each input.
-        // This is not true anymore - we analyze all inputs in one go. These
-        // comments and this way of assigning fft_input_ptr and fft_output_ptr
-        // are left as is in case we need to go back to one-input-at-a-time.
-        float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
-        float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
+    // Input pointer varies with input.
+    // Output pointer is constant - we reuse the output area for each input.
+    // This is not true anymore - we analyze all inputs in one go. These
+    // comments and this way of assigning fft_input_ptr and fft_output_ptr
+    // are left as is in case we need to go back to one-input-at-a-time.
+    float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
+    float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
 
-        // FFT. We create and destroy the cufft plan each time around in order to
-        // conserve the considerable amount of GPU memory that the plan requires. 
-        if(use_timer) timer.start();
-        create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
-                           cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
-                           cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
-        if(use_timer) timer.stop();
-        sum_of_times += timer.getTime();
-        if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
-        if(use_timer) timer.reset();
-        do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
-        cufftDestroy(*fft_plan_p);
-        if(track_gpu_memory) get_gpu_mem_info("right after FFT");
+    // FFT. We create and destroy the cufft plan each time around in order to
+    // conserve the considerable amount of GPU memory that the plan requires. 
+    if(use_timer) timer.start();
+    create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
+                       cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
+                       cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
+    if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
+    if(use_timer) cout << "cufft plan time:\t" << timer.getTime() << endl;
+    if(use_timer) timer.reset();
+    do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
+    cufftDestroy(*fft_plan_p);
+    if(track_gpu_memory) get_gpu_mem_info("right after FFT");
 
-        compute_power_spectrum      (dv_p);                                         // compute power spectrum
+    compute_power_spectrum      (dv_p);                                         // compute power spectrum
 
-        // done with the timeseries and FFTs - delete the associated GPU memory
-        if(track_gpu_memory) get_gpu_mem_info("right after compute power spectrum");
-        //delete(dv_p->raw_timeseries_p);   // two pols        
+    // done with the timeseries and FFTs - delete the associated GPU memory
+    if(track_gpu_memory) get_gpu_mem_info("right after compute power spectrum");
+    //delete(dv_p->raw_timeseries_p);   // two pols        
 cudaThreadSynchronize();
-        delete(dv_p->fft_data_p);         
-        delete(dv_p->fft_data_out_p);     
-        if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
+    delete(dv_p->fft_data_p);         
+    delete(dv_p->fft_data_out_p);     
+    if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
 
-        // reduce coarse channels to mean power...
-        reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
+    // reduce coarse channels to mean power...
+    reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
 
-        // Allocate GPU memory for power normalization
-        dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
-        if(track_gpu_memory) get_gpu_mem_info("right after baseline vector allocation");
-        dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
-        if(track_gpu_memory) get_gpu_mem_info("right after normalized vector allocation");
-        dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
-        if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
+    // Allocate GPU memory for power normalization
+    dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    if(track_gpu_memory) get_gpu_mem_info("right after baseline vector allocation");
+    dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    if(track_gpu_memory) get_gpu_mem_info("right after normalized vector allocation");
+    dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
 
-        // Power normalization
-        compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
-        if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
+    // Power normalization
+    compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
+    if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
 cudaThreadSynchronize();
-        delete(dv_p->scanned_p);          
-        if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
-        normalize_power_spectrum    (dv_p);
-        if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
-        nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
-        if(track_gpu_memory) get_gpu_mem_info("right after find hits");
-        // TODO should probably report if nhits == maxgpuhits, ie overflow
+    delete(dv_p->scanned_p);          
+    if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
+    normalize_power_spectrum    (dv_p);
+    if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
+    nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
+    if(track_gpu_memory) get_gpu_mem_info("right after find hits");
+    // TODO should probably report if nhits == maxgpuhits, ie overflow
     
-        // copy to return vector
-        nhits = nhits > maxhits ? maxhits : nhits;
-        if(use_timer) timer.start();
-        total_nhits += nhits;
-        s6_output_block->header.nhits[bors] = nhits;
-        // We output both detected and mean powers (not S/N).
-        thrust::copy(dv_p->hit_powers_p->begin(),    dv_p->hit_powers_p->end(),    &s6_output_block->power[bors][0]);      
-        thrust::copy(dv_p->hit_baselines_p->begin(), dv_p->hit_baselines_p->end(), &s6_output_block->baseline[bors][0]);
-        thrust::copy(dv_p->hit_indices_p->begin(),   dv_p->hit_indices_p->end(),   &s6_output_block->hit_indices[bors][0]);
-        for(size_t i=0; i<nhits; ++i) {
-            long hit_index                        = s6_output_block->hit_indices[bors][i]; 
-            long spectrum_index                   = (long)floor((double)hit_index/n_fc);
+    // copy to return vector
+    nhits = nhits > maxhits ? maxhits : nhits;
+    if(use_timer) timer.start();
+    total_nhits += nhits;
+    s6_output_block->header.nhits[bors] = nhits;
+    // We output both detected and mean powers (not S/N).
+    thrust::copy(dv_p->hit_powers_p->begin(),    dv_p->hit_powers_p->end(),    &s6_output_block->power[bors][0]);      
+    thrust::copy(dv_p->hit_baselines_p->begin(), dv_p->hit_baselines_p->end(), &s6_output_block->baseline[bors][0]);
+    thrust::copy(dv_p->hit_indices_p->begin(),   dv_p->hit_indices_p->end(),   &s6_output_block->hit_indices[bors][0]);
+    for(size_t i=0; i<nhits; ++i) {
+        long hit_index                        = s6_output_block->hit_indices[bors][i]; 
+        long spectrum_index                   = (long)floor((double)hit_index/n_fc);
 #ifdef SOURCE_S6
-            s6_output_block->pol[bors][i]         = ao_pol(spectrum_index);
-            s6_output_block->coarse_chan[bors][i] = ao_coarse_chan(spectrum_index);
+        s6_output_block->pol[bors][i]         = ao_pol(spectrum_index);
+        s6_output_block->coarse_chan[bors][i] = ao_coarse_chan(spectrum_index);
 #elif SOURCE_DIBAS
-            s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
-            s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
+        s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
+        s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
 #elif SOURCE_FAST
-            s6_output_block->pol[bors][i]         = pol;   
-            s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
+        s6_output_block->pol[bors][i]         = pol;   
+        s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
 #endif
-            s6_output_block->fine_chan[bors][i]   = hit_index % n_fc;
+        s6_output_block->fine_chan[bors][i]   = hit_index % n_fc;
 //#define PRINT_HIT_INFO
 #ifdef PRINT_HIT_INFO
-            fprintf(stderr, "bors %d i %d hit_index %ld spectrum_index %ld pol %d cchan %d fchan %d power %f\n", 
-                    bors, i, hit_index, spectrum_index, s6_output_block->pol[bors][i], s6_output_block->coarse_chan[bors][i], 
-                    s6_output_block->fine_chan[bors][i], s6_output_block->power[bors][i]);
+        fprintf(stderr, "bors %d i %d hit_index %ld spectrum_index %ld pol %d cchan %d fchan %d power %f\n", 
+                bors, i, hit_index, spectrum_index, s6_output_block->pol[bors][i], s6_output_block->coarse_chan[bors][i], 
+                s6_output_block->fine_chan[bors][i], s6_output_block->power[bors][i]);
 #endif
-        } // end for i<nhits 
-    	if(use_timer) timer.stop();
-        sum_of_times += timer.getTime();
-    	if(use_timer) cout << "Copy to return vector time:\t" << timer.getTime() << endl;
-    	if(use_timer) timer.reset();
+    } // end for i<nhits 
+	if(use_timer) timer.stop();
+    sum_of_times += timer.getTime();
+    if(use_timer) cout << "Copy to return vector time:\t" << timer.getTime() << endl;
+    if(use_timer) timer.reset();
 #endif
         
-        // delete remaining GPU memory
+    // delete remaining GPU memory
 cudaThreadSynchronize();
-        delete dv_p->powspec_p;          
-        delete dv_p->baseline_p;         
-        delete(dv_p->normalised_p);       
-        delete(dv_p->hit_baselines_p);  
-        delete(dv_p->hit_indices_p);  
-        delete(dv_p->hit_powers_p); 
+    delete dv_p->powspec_p;          
+    delete dv_p->baseline_p;         
+    delete(dv_p->normalised_p);       
+    delete(dv_p->hit_baselines_p);  
+    delete(dv_p->hit_indices_p);  
+    delete(dv_p->hit_powers_p); 
 
     delete(dv_p->raw_timeseries_p);   
+
+	sem_post(gpu_sem);
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
     if(use_total_gpu_timer) cout << "Sum of times:\t" << sum_of_times << endl;
     if(use_total_gpu_timer) cout << "Uncounted time:\t" << total_gpu_timer.getTime() - sum_of_times << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
-
-	sem_post(gpu_sem);
     
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;
