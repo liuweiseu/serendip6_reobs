@@ -19,6 +19,7 @@
 #include "s6_databuf.h"
 #include "s6_obs_data.h"
 #include "s6_obs_data_gbt.h"
+#include "s6_obs_data_fast.h"
 #include "s6_etfits.h"
 #include "s6_redis.h"
 
@@ -60,8 +61,8 @@ static void *run(hashpipe_thread_args_t * args)
     strcpy(prior_receiver,"");
 #elif SOURCE_FAST
 // TODO all of the SOURCE_FAST sections are copies of SOURCE_DIBAS sections as place holders.
-    gbtstatus_t gbtstatus;
-    gbtstatus_t * gbtstatus_p = &gbtstatus;
+    faststatus_t faststatus;
+    faststatus_t * faststatus_p = &faststatus;
     char *prior_receiver = (char *)malloc(32);
     strcpy(prior_receiver,"");
 #endif    
@@ -152,9 +153,8 @@ static void *run(hashpipe_thread_args_t * args)
             gbtstatus.WEBCNTRL = 1;                                 // ... except for WEBCNTRL
 			strcpy(gbtstatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
 #elif SOURCE_FAST
-            memset((void *)gbtstatus_p, 0, sizeof(gbtstatus_t));    // test mode - zero entire gbtstatus
-            gbtstatus.WEBCNTRL = 1;                                 // ... except for WEBCNTRL
-			strcpy(gbtstatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
+            memset((void *)faststatus_p, 0, sizeof(faststatus_t));  // test mode - zero entire gbtstatus
+			strcpy(faststatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
 																	//     test mode for downstream processes
 #endif
         }
@@ -205,6 +205,8 @@ static void *run(hashpipe_thread_args_t * args)
         scram.coarse_chan_id = db->block[block_idx].header.coarse_chan_id;
 #elif SOURCE_DIBAS
         gbtstatus.coarse_chan_id = db->block[block_idx].header.coarse_chan_id;
+#elif SOURCE_FAST
+        faststatus.coarse_chan_id = 0;
 #endif
         hashpipe_status_lock_safe(&st);
 #ifdef SOURCE_S6
@@ -265,8 +267,7 @@ static void *run(hashpipe_thread_args_t * args)
             if(strcmp(gbtstatus.IFV1TNCI,prior_receiver) != 0 ||
                gbtstatus.WEBCNTRL == 0                        ||
 #elif SOURCE_FAST
-            if(strcmp(gbtstatus.IFV1TNCI,prior_receiver) != 0 ||
-               gbtstatus.WEBCNTRL == 0                        ||
+            if(strcmp(faststatus.RECEIVER,prior_receiver) != 0 ||
 #endif
                run_always      != prior_run_always            ||
                num_coarse_chan != db->block[block_idx].header.num_coarse_chan) {
@@ -278,7 +279,7 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_DIBAS
                               num_coarse_chan, gbtstatus.IFV1TNCI);
 #elif SOURCE_FAST
-                              num_coarse_chan, gbtstatus.IFV1TNCI);
+                              num_coarse_chan, faststatus.RECEIVER);
 #endif
 
                 if(etf.file_open) {
@@ -291,7 +292,7 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_DIBAS
                 strcpy(prior_receiver,gbtstatus.IFV1TNCI);
 #elif SOURCE_FAST
-                strcpy(prior_receiver,gbtstatus.IFV1TNCI);
+                strcpy(prior_receiver,faststatus.RECEIVER);
 #endif
                 num_coarse_chan  = db->block[block_idx].header.num_coarse_chan; 
                 prior_run_always = run_always;
@@ -307,7 +308,7 @@ static void *run(hashpipe_thread_args_t * args)
         //if(run_always && gbtstatus.WEBCNTRL == 1 && !idle) {
         if(testmode || run_always && gbtstatus.WEBCNTRL) {
 #elif SOURCE_FAST
-        if(testmode || run_always && gbtstatus.WEBCNTRL) {
+        if(testmode || run_always) {
 #endif
 #ifdef SOURCE_S6
             etf.file_chan = scram.coarse_chan_id;          
@@ -316,8 +317,8 @@ static void *run(hashpipe_thread_args_t * args)
             etf.file_chan = gbtstatus.coarse_chan_id;           // TODO - sensible for GBT?
             rv = write_etfits_gbt(db, block_idx, &etf, gbtstatus_p);
 #elif SOURCE_FAST
-            etf.file_chan = gbtstatus.coarse_chan_id;           // TODO - sensible for GBT?
-            rv = write_etfits_gbt(db, block_idx, &etf, gbtstatus_p);
+            etf.file_chan = 0;                                  // constant - FAST data not coarse channelized
+            rv = write_etfits_fast(db, block_idx, &etf, faststatus_p);
 #endif
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_etfits()");
@@ -377,6 +378,9 @@ static void *run(hashpipe_thread_args_t * args)
         hputr4(st.buf, "CCAV300X", db->block[block_idx].cc_pwrs_x[300]);
         hputr4(st.buf, "CCAV511Y", db->block[block_idx].cc_pwrs_y[511]);
 #endif
+#endif
+#ifdef SOURCE_FAST
+// nothing here because FAST data are not coarse channelized
 #endif
         hashpipe_status_unlock_safe(&st);
 

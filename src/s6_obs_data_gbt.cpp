@@ -11,7 +11,7 @@
 #include "s6_obs_data_gbt.h"
 
 //----------------------------------------------------------
-redisContext * redis_connect(char *hostname, int port) {
+static redisContext * redis_connect(char *hostname, int port) {
 //----------------------------------------------------------
     redisContext *c;
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
@@ -32,7 +32,7 @@ redisContext * redis_connect(char *hostname, int port) {
 }
 
 //----------------------------------------------------------
-int s6_strcpy(char * dest, char * src, int strsize=GBTSTATUS_STRING_SIZE) {
+static int s6_strcpy(char * dest, char * src, int strsize=GBTSTATUS_STRING_SIZE) {
 //----------------------------------------------------------
 
     strncpy(dest, src, strsize);
@@ -43,7 +43,7 @@ int s6_strcpy(char * dest, char * src, int strsize=GBTSTATUS_STRING_SIZE) {
 }
 
 //----------------------------------------------------------
-int s6_redis_get(redisContext *c, redisReply ** reply, const char * query) {
+static int s6_redis_get(redisContext *c, redisReply ** reply, const char * query) {
 //----------------------------------------------------------
 
     int rv = 0;

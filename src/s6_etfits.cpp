@@ -13,6 +13,7 @@
 #include "s6_databuf.h"
 #include "s6_obs_data.h"
 #include "s6_obs_data_gbt.h"
+#include "s6_obs_data_fast.h"
 #include "s6_etfits.h"
 #include "s6_obsaux.h"
 
@@ -223,6 +224,89 @@ int write_etfits_gbt(s6_output_databuf_t *db, int block_idx, etfits_t *etf, gbts
     return *status_p;
 }
 
+#if 1
+//----------------------------------------------------------
+int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, faststatus_t *faststatus_p) {
+//----------------------------------------------------------
+    int row, rv;
+    int nchan, nivals, nsubband;
+    char* temp_str;
+    double temp_dbl;
+    size_t nhits;
+
+    int * status_p = &(etf->status);
+    *status_p = 0;
+
+    // Create the initial file or change to a new one if needed.
+    if (etf->new_run || etf->new_file) {
+        etf->new_file = 0;
+        if (!etf->new_run) {
+            if(etf->file_open) {
+                etfits_close(etf);
+            }
+            etf->integration_cnt = 0;
+        }
+        // TODO update code versions
+        etf->primary_hdr.n_subband = db->block[block_idx].header.num_coarse_chan;
+        etf->primary_hdr.n_chan    = N_FINE_CHAN;
+        //etf->primary_hdr.n_inputs  = N_BEAMS * N_POLS_PER_BEAM;
+        etf->primary_hdr.n_inputs  = N_BORS * N_POLS_PER_BEAM;
+        // in scram, need to look up receiver from array? but in gbtstatus, it's already a string, so just copy it?...
+        // strncpy(etf->primary_hdr.receiver, receiver[gbtstauts_p->receiver], sizeof(etf->primary_hdr.receiver));
+        strncpy(etf->primary_hdr.receiver, faststatus_p->RECEIVER, sizeof(etf->primary_hdr.receiver));
+        etf->primary_hdr.power_threshold  = (double)POWER_THRESH;
+        etf->primary_hdr.smooth_scale     = (int)SMOOTH_SCALE;
+        // TODO not yet implemented
+        //etf->primary_hdr.bandwidth = ;
+        //etf->primary_hdr.chan_bandwidth = ;
+        //etf->primary_hdr.freq_res = ;
+        etfits_create(etf);
+        if(*status_p) {
+            hashpipe_error(__FUNCTION__, "Error creating/initializing new etfits file");
+            //fprintf(stderr, "Error creating/initializing new etfits file.\n");
+            fits_report_error(stderr, *status_p);
+            exit(1);
+        }    
+        write_primary_header(etf);
+        etf->file_cnt++;
+    }
+
+    // populate hits header data
+    // TODO maybe I should do away with this and write directly to the header
+    //      from scram in write_hits_header()
+    //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
+    for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
+        etf->hits_hdr[i].time    = 12345;   
+        etf->hits_hdr[i].ra      = 1.23;
+        etf->hits_hdr[i].dec     = 4.56;
+        etf->hits_hdr[i].beampol = i;       
+    }
+
+    if(! *status_p) write_integration_header_fast(etf, faststatus_p);
+
+    if(! *status_p) nhits = write_ccpwrs(db, block_idx, etf);
+
+    if(! *status_p) nhits = write_hits(db, block_idx, etf);
+
+    etf->integration_cnt++;
+
+    // Now update some key values if no CFITSIO errors
+    if (! *status_p) {
+        etf->tot_rows += nhits;
+        etf->N += 1;
+        *status_p = check_for_file_roll(etf);
+    }
+
+    if(*status_p) {
+        hashpipe_error(__FUNCTION__, "FITS error, exiting");
+        //fprintf(stderr, "FITS error, exiting.\n");
+        exit(1);
+    }
+
+    return *status_p;
+}
+#endif
+
 //----------------------------------------------------------
 int etfits_create(etfits_t * etf) {
 //----------------------------------------------------------
@@ -283,7 +367,7 @@ int etfits_create(etfits_t * etf) {
 #elif SOURCE_DIBAS
     sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_GBT_TEMPLATE);
 #elif SOURCE_FAST
-    sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_GBT_TEMPLATE);
+    sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_FAST_TEMPLATE);
 #endif
     if(! *status_p) fits_create_template(&(etf->fptr), etf->filename_working, template_file, status_p);
 
@@ -493,6 +577,43 @@ int write_integration_header_gbt(etfits_t * etf, gbtstatus_t *gbtstatus) {
     return *status_p;
 }
 
+
+#if 1
+//----------------------------------------------------------
+int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus) {
+//----------------------------------------------------------
+
+    int * status_p = &(etf->status);
+    *status_p = 0;
+
+    if(etf->integration_cnt == 0) {
+        // go to the template created HDU
+        if(! *status_p) fits_movnam_hdu(etf->fptr, BINARY_TBL, (char *)"FASTSTATUS", 0, status_p);
+    } else {
+        // create new HDU
+        if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, 0, NULL, NULL, NULL, (char *)"FASTSTATUS", status_p);
+    }
+
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING,  "EXTNAME",  (char *)"FASTSTATUS",  NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TINT,     "COARCHID", &faststatus->coarse_chan_id,   NULL, status_p); 
+
+    // observatory data 
+    //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 
+
+
+
+
+
+
+    if (*status_p) {
+        hashpipe_error(__FUNCTION__, "Error writing integration header");
+        //fprintf(stderr, "Error writing integration header.\n");
+        fits_report_error(stderr, *status_p);
+    }
+
+    return *status_p;
+}
+#endif
 
 
 //----------------------------------------------------------

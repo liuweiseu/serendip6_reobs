@@ -12,6 +12,7 @@
 // The following is the template file to use to create a ETFITS file.
 #define ETFITS_TEMPLATE "s6_ETFITS_template.txt"
 #define ETFITS_GBT_TEMPLATE "s6_ETFITS_gbt_template.txt"
+#define ETFITS_FAST_TEMPLATE "s6_ETFITS_fast_template.txt"
 
 typedef struct etfits_primary_header {
     char date[16];          // Date file was created (dd/mm/yy)  TODO does this need to be populated?
@@ -78,13 +79,15 @@ typedef struct etfits {
 
 int init_etfits(etfits_t *etf);
 int check_for_file_roll(etfits_t *etf);
-int write_etfits(s6_output_databuf_t *db, int block_idx, etfits_t *etf, scram_t *scram_p);
-int write_etfits_gbt(s6_output_databuf_t *db, int block_idx, etfits_t *etf, gbtstatus_t *gbtstatus_p);
+int write_etfits(s6_output_databuf_t      *db, int block_idx, etfits_t *etf, scram_t      *scram_p);
+int write_etfits_gbt(s6_output_databuf_t  *db, int block_idx, etfits_t *etf, gbtstatus_t  *gbtstatus_p);
+int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, faststatus_t *faststatus_p);
 int etfits_create(etfits_t *etf);
 int etfits_close(etfits_t *etf);
 int write_primary_header(etfits_t *etf);
 int write_integration_header(etfits_t *etf, scram_t *scram);
 int write_integration_header_gbt(etfits_t *etf, gbtstatus_t *gbtstatus);
+int write_integration_header_fast(etfits_t *etf, faststatus_t *faststatus);
 int write_ccpwrs_header(etfits_t *etf);
 int write_ccpwrs(s6_output_databuf_t *db, int block_idx, etfits_t *etf);
 int write_hits_header(etfits_t *etf, size_t nhits);
