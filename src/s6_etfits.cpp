@@ -272,13 +272,11 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     }
 
     // populate hits header data
-    // TODO maybe I should do away with this and write directly to the header
-    //      from scram in write_hits_header()
     //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
-        etf->hits_hdr[i].time    = 12345;   
-        etf->hits_hdr[i].ra      = 1.23;
-        etf->hits_hdr[i].dec     = 4.56;
+        etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
+        etf->hits_hdr[i].ra      = faststatus_p->POINTRA;
+        etf->hits_hdr[i].dec     = faststatus_p->POINTDEC;
         etf->hits_hdr[i].beampol = i;       
     }
 
@@ -580,7 +578,7 @@ int write_integration_header_gbt(etfits_t * etf, gbtstatus_t *gbtstatus) {
 
 #if 1
 //----------------------------------------------------------
-int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus) {
+int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
 //----------------------------------------------------------
 
     int * status_p = &(etf->status);
@@ -594,8 +592,20 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus) {
         if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, 0, NULL, NULL, NULL, (char *)"FASTSTATUS", status_p);
     }
 
-    if(! *status_p) fits_update_key(etf->fptr, TSTRING,  "EXTNAME",  (char *)"FASTSTATUS",  NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TINT,     "COARCHID", &faststatus->coarse_chan_id,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",  (char *)"FASTSTATUS",  NULL, status_p); 
+
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &faststatus_p->coarse_chan_id,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RECEIVER", &(faststatus_p->RECEIVER), NULL, status_p); 
+
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "CLOCKTIM", &(faststatus_p->CLOCKTIM), NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKFRQ", &(faststatus_p->CLOCKFRQ), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKDBM", &(faststatus_p->CLOCKDBM), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "CLOCKLOC", &(faststatus_p->CLOCKLOC), NULL, status_p); 
+
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "BIRDITIM", &(faststatus_p->BIRDITIM), NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "BIRDIFRQ", &(faststatus_p->BIRDIFRQ), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "BIRDIDBM", &(faststatus_p->BIRDIDBM), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "BIRDILOC", &(faststatus_p->BIRDILOC), NULL, status_p);
 
     // observatory data 
     //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 

@@ -20,19 +20,28 @@
 
 typedef struct faststatus {
 
-   char RECEIVER[FASTSTATUS_STRING_SIZE];       // receiver
-   long RECEIVERSTIME;
+// TODO - use time_t?
+   long     TIMETIM;                            // unix time
+   long     TIME;
 
-   int     CLOCKTIM;
-   double  CLOCKFRQ;
-   double  CLOCKDBM;
-   int     CLOCKLOC;
-   int     BIRDITIM;
-   double  BIRDIFRQ;
-   double  BIRDIDBM;
-   int     BIRDILOC;
+   long     RECTIM;                             // receiver
+   char     RECEIVER[FASTSTATUS_STRING_SIZE];  
 
-  int     coarse_chan_id;
+   long     POINTTIM;                           // telescope pointing 
+   double   POINTRA; 
+   double   POINTDEC;
+
+   int      CLOCKTIM;                           // clock synth
+   double   CLOCKFRQ;
+   double   CLOCKDBM;
+   int      CLOCKLOC;
+
+   int      BIRDITIM;                           // IF birdie synth
+   double   BIRDIFRQ;
+   double   BIRDIDBM;
+   int      BIRDILOC;
+
+  int     coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
 
 int get_obs_fast_info_from_redis(faststatus_t *faststatus, char *hostname, int port);

@@ -140,10 +140,13 @@ static void *run(hashpipe_thread_args_t * args)
         hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
         if(!testmode) {
+        //if(testmode) {
 #ifdef SOURCE_S6
-            rv = get_obs_info_from_redis(scram_p, (char *)"redishost", 6379);
+            rv = get_obs_info_from_redis(scram_p,           (char *)"redishost", 6379);
 #elif SOURCE_DIBAS
-            rv = get_obs_gbt_info_from_redis(gbtstatus_p, (char *)REDISHOST, 6379);
+            rv = get_obs_gbt_info_from_redis(gbtstatus_p,   (char *)REDISHOST, 6379);
+#elif SOURCE_FAST
+            rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
 #endif
         } else {
 #ifdef SOURCE_S6

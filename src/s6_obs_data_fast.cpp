@@ -117,7 +117,59 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 
     double mjd_now;  
 
-    // Sample clock rate parameters
+    struct timeval timeout = { 1, 500000 }; // 1.5 seconds
+
+    // TODO make c static?
+    c = redisConnectWithTimeout(hostname, port, timeout);
+    if (c == NULL || c->err) {
+        if (c) {
+            hashpipe_error(__FUNCTION__, c->errstr);
+            redisFree(c);
+        } else {
+            hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
+        }
+        exit(1);
+    }
+
+    // make sure redis is being updated!
+    // example from AO:
+#if 0
+    if(scram->AGCTIME == prior_agc_time) {
+        no_time_change_count++;
+        hashpipe_warn(__FUNCTION__, "agctime in redis databse has not been updated over %d queries", no_time_change_count);
+        if(no_time_change_count >= no_time_change_limit) {
+            hashpipe_error(__FUNCTION__, "redis databse is static!");
+            rv = 1;
+        }
+    } else {
+        no_time_change_count = 0;
+        prior_agc_time = scram->AGCTIME;
+    } 
+#endif
+
+    // Time
+    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET UNIXTIME      TIMETIM TIME"))) {
+         faststatus->TIMETIM = atoi(reply->element[0]->str);
+         faststatus->TIME    = atof(reply->element[1]->str);
+         freeReplyObject(reply);
+    } 
+
+    // Receiver
+    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET REC      RECTIM RECEIVER"))) {
+         faststatus->RECTIM =    atoi(reply->element[0]->str);
+         strcpy(faststatus->RECEIVER, reply->element[1]->str);
+         freeReplyObject(reply);
+    } 
+
+    // Telescope pointing
+    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET POINTING      POINTTIM POINTRA POINTDEC"))) {
+         faststatus->POINTTIM = atoi(reply->element[0]->str);
+         faststatus->POINTRA  = atof(reply->element[1]->str);
+         faststatus->POINTDEC = atof(reply->element[2]->str);
+         freeReplyObject(reply);
+    } 
+
+    // Clock synth
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET CLOCKSYN      CLOCKTIM CLOCKFRQ CLOCKDBM CLOCKLOC"))) {
         faststatus->CLOCKTIM = atoi(reply->element[0]->str);
         faststatus->CLOCKFRQ = atof(reply->element[1]->str);
@@ -126,7 +178,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         freeReplyObject(reply);
     } 
 
-    // Birdie frequency parameters
+    // Birdie synth
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET BIRDISYN      BIRDITIM BIRDIFRQ BIRDIDBM BIRDILOC"))) {
         faststatus->BIRDITIM = atoi(reply->element[0]->str);
         faststatus->BIRDIFRQ = atof(reply->element[1]->str);
