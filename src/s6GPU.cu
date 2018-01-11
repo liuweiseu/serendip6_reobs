@@ -163,6 +163,23 @@ inline void get_gpu_mem_info(const char * comment) {
     }
 } 
 
+inline void print_current_time(const char * comment) {
+    long            ms; // Milliseconds
+    time_t          s;  // Seconds
+    struct timespec spec;
+
+    clock_gettime(CLOCK_REALTIME, &spec);
+
+    s  = spec.tv_sec;
+    ms = round(spec.tv_nsec / 1.0e6); // Convert nanoseconds to milliseconds
+    if (ms > 999) {
+        s++;
+        ms = 0;
+    }
+
+    fprintf(stderr, "%s : %ld.%03ld unix time\n", comment, s, ms);
+}
+
 // Note: input == output is ok
 void execute_fft_plan_c2c(cufftHandle   *plan,
                           const float2* input,
@@ -885,7 +902,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
 //#define DUMP_RAW_SAMPLES
 #ifdef DUMP_RAW_SAMPLES
     static int cnt = 0;
-    if(cnt++ == 10) {                                                       // wait for 10 buffers to nake sure we are settled
+    if(cnt++ == 10) {                                                       // wait for 10 buffers to make sure we are settled
         int num_samples_to_dump = 8*1024;
         for(int i=0; i < num_samples_to_dump; i++) printf("%d\n", h_raw_timeseries[i]);   
     }
@@ -897,6 +914,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);   // two pols
 
     // Copy to the device
+//print_current_time("right before time series copy");
     if(use_timer) timer.start();
     thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
                  dv_p->raw_timeseries_p->begin());
@@ -906,23 +924,27 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_timer) cout << "H2D time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
+//print_current_time("right before sem wait");
     if(use_timer) timer.start();
 	sem_wait(gpu_sem);
     if(use_timer) timer.stop();
     sum_of_times += timer.getTime();
+//print_current_time("right after sem wait");
     if(use_timer) cout << "sem wait time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
 
-    // allocate (and delete - see below) for each pol
+    // allocate (and delete - see below) 
     dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
     dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
     dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
 
     dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
     if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
     dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
     if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
+    //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
 
     dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
     if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
@@ -949,6 +971,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // are left as is in case we need to go back to one-input-at-a-time.
     float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
     float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
+    //float2* fft_output_ptr = (float2*)thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0])); // if doing the FFT in place (not tested)
 
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
@@ -974,8 +997,8 @@ cudaThreadSynchronize();
     delete(dv_p->fft_data_out_p);     
     if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
 
-    // reduce coarse channels to mean power...
-    reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
+    // reduce coarse channels to mean power... we can skip this for FAST
+    //reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
 
     // Allocate GPU memory for power normalization
     dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
@@ -992,6 +1015,8 @@ cudaThreadSynchronize();
     delete(dv_p->scanned_p);          
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
     normalize_power_spectrum    (dv_p);
+
+    // Hit finding
     if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
     nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
     if(track_gpu_memory) get_gpu_mem_info("right after find hits");
@@ -1045,6 +1070,7 @@ cudaThreadSynchronize();
     delete(dv_p->raw_timeseries_p);   
 
 	sem_post(gpu_sem);
+//print_current_time("right after sem post");
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
