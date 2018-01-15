@@ -274,7 +274,8 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     // populate hits header data
     //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
-        etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
+        //etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
+        etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
         etf->hits_hdr[i].ra      = faststatus_p->POINTRA;
         etf->hits_hdr[i].dec     = faststatus_p->POINTDEC;
         etf->hits_hdr[i].beampol = i;       
