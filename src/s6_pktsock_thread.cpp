@@ -211,6 +211,7 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
     unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
     unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
     pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
+//fprintf(stdout, "[%016lx]", raw_header);
 //print_pkt_header(pkt_header);
 #endif
 
@@ -864,8 +865,9 @@ static void *run(hashpipe_thread_args_t * args)
     while (run_threads()) {
 
 #ifndef TIMING_TEST
-        /* Read packet */
 	clock_gettime(CLOCK_MONOTONIC, &recv_start);
+
+    // read one packet
 	do {
 	    clock_gettime(CLOCK_MONOTONIC, &start);
 	    //p_frame = hashpipe_pktsock_recv_udp_frame(p_ps, bindport, 10);
@@ -874,10 +876,12 @@ static void *run(hashpipe_thread_args_t * args)
 	    p_frame = hashpipe_pktsock_recv_udp_frame_nonblock(p_ps, bindport);
 	    clock_gettime(CLOCK_MONOTONIC, &recv_stop);
 	} while (!p_frame && run_threads());
+
 	if(!run_threads()) break;
+
 	// Handle variable packet size!
-        int packet_size = PKT_UDP_SIZE(p_frame) - 8;
-        if (packet_size < 16 || max_packet_size < packet_size || packet_size % 8 != 0) {
+    int packet_size = PKT_UDP_SIZE(p_frame) - 8;
+    if (packet_size < 16 || max_packet_size < packet_size || packet_size % 8 != 0) {
 	    // Log warning and ignore wrongly sized packet
 	    #ifdef DEBUG_NET
 	    hashpipe_warn("s6_pktsock_thread", "Invalid pkt size (%d) %d", packet_size, max_packet_size);
@@ -885,14 +889,14 @@ static void *run(hashpipe_thread_args_t * args)
 	    continue;
 	}
 #endif
-	packet_count++;
 
-        // Copy packet into any blocks where it belongs.
-        const uint64_t mcnt = process_packet((s6_input_databuf_t *)db, p_frame);
-	// Release frame back to kernel
-	hashpipe_pktsock_release_frame(p_frame);
+	packet_count++;
+    const uint64_t mcnt = process_packet((s6_input_databuf_t *)db, p_frame);    // Copy packet into any blocks where it belongs
+	hashpipe_pktsock_release_frame(p_frame);    	                            // Release frame back to kernel
 
 	clock_gettime(CLOCK_MONOTONIC, &stop);
+
+    // collect per packet stats
 	wait_ns = ELAPSED_NS(recv_start, start);
 	recv_ns = ELAPSED_NS(start, recv_stop);
 	proc_ns = ELAPSED_NS(recv_stop, stop);
@@ -907,41 +911,43 @@ static void *run(hashpipe_thread_args_t * args)
 	max_recv_ns = MAX(recv_ns, max_recv_ns);
 	max_proc_ns = MAX(proc_ns, max_proc_ns);
 
-        if(mcnt != -1) {
-            // Update status
-            ns_per_wait = (float)elapsed_wait_ns / packet_count;
-            ns_per_recv = (float)elapsed_recv_ns / packet_count;
-            ns_per_proc = (float)elapsed_proc_ns / packet_count;
+    // collect per block stats (mcnt != -1 indicates that the most recent packet triggered a block being marked filled)
+    if(mcnt != -1) {
+        // Update status
+        ns_per_wait = (float)elapsed_wait_ns / packet_count;
+        ns_per_recv = (float)elapsed_recv_ns / packet_count;
+        ns_per_proc = (float)elapsed_proc_ns / packet_count;
 
 	    // Get stats from packet socket
 	    hashpipe_pktsock_stats(p_ps, &pktsock_pkts, &pktsock_drops);
 
-            hashpipe_status_lock_busywait_safe(&st);
+        hashpipe_status_lock_busywait_safe(&st);
 
-            hputu8(st.buf, "NETMCNT", mcnt);
+        hputu8(st.buf, "NETMCNT", mcnt);
 	    // Gbps = bits_per_packet / ns_per_packet
 	    // (N_BYTES_PER_PACKET excludes header, so +8 for the header)
-            hputr4(st.buf, "NETGBPS", 8*(packet_size)/(ns_per_recv+ns_per_proc));
-            hputr4(st.buf, "NETWATNS", ns_per_wait);
-            hputr4(st.buf, "NETRECNS", ns_per_recv);
-            hputr4(st.buf, "NETPRCNS", ns_per_proc);
+        hputr4(st.buf, "NETGBPS", 8*(packet_size)/(ns_per_recv+ns_per_proc));
+        hputr4(st.buf, "NETWATNS", ns_per_wait);
+        hputr4(st.buf, "NETRECNS", ns_per_recv);
+        hputr4(st.buf, "NETPRCNS", ns_per_proc);
 
-            hputi8(st.buf, "NETWATMN", min_wait_ns);
-            hputi8(st.buf, "NETRECMN", min_recv_ns);
-            hputi8(st.buf, "NETPRCMN", min_proc_ns);
-            hputi8(st.buf, "NETWATMX", max_wait_ns);
-            hputi8(st.buf, "NETRECMX", max_recv_ns);
-            hputi8(st.buf, "NETPRCMX", max_proc_ns);
+        hputi8(st.buf, "NETWATMN", min_wait_ns);
+        hputi8(st.buf, "NETRECMN", min_recv_ns);
+        hputi8(st.buf, "NETPRCMN", min_proc_ns);
+        hputi8(st.buf, "NETWATMX", max_wait_ns);
+        hputi8(st.buf, "NETRECMX", max_recv_ns);
+        hputi8(st.buf, "NETPRCMX", max_proc_ns);
 
-            hputu8(st.buf, "NETPKTS",  pktsock_pkts);
-            hputu8(st.buf, "NETDROPS", pktsock_drops);
+        hputu8(st.buf, "NETPKTS",  pktsock_pkts);
+        hputu8(st.buf, "NETDROPS", pktsock_drops);
+fprintf(stderr, "NETPKTS %d NETDROPS %d\n", pktsock_pkts, pktsock_drops);
 
-            hgetu8(st.buf, "NETPKTTL", (long long unsigned int*)&pktsock_pkts_total);
-            hgetu8(st.buf, "NETDRPTL", (long long unsigned int*)&pktsock_drops_total);
-            hputu8(st.buf, "NETPKTTL", pktsock_pkts_total + pktsock_pkts);
-            hputu8(st.buf, "NETDRPTL", pktsock_drops_total + pktsock_drops);
+        hgetu8(st.buf, "NETPKTTL", (long long unsigned int*)&pktsock_pkts_total);
+        hgetu8(st.buf, "NETDRPTL", (long long unsigned int*)&pktsock_drops_total);
+        hputu8(st.buf, "NETPKTTL", pktsock_pkts_total + pktsock_pkts);
+        hputu8(st.buf, "NETDRPTL", pktsock_drops_total + pktsock_drops);
 
-            hashpipe_status_unlock_safe(&st);
+        hashpipe_status_unlock_safe(&st);
 
 	    // Reset mins and maxs to make them be per-block rather than for
 	    // all time.
@@ -957,7 +963,7 @@ static void *run(hashpipe_thread_args_t * args)
 	    elapsed_recv_ns = 0;
 	    elapsed_proc_ns = 0;
 	    packet_count = 0;
-        }
+    }
 
 #if defined TIMING_TEST || defined NET_TIMING_TEST
 
