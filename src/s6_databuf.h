@@ -36,6 +36,9 @@
 #define N_SOURCE_NODES              (N_BEAMS)
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN)
 #define SMOOTH_SCALE                1024
+#define N_INPUT_BLOCKS          3
+#define N_DEBUG_INPUT_BLOCKS    0
+#define N_OUTPUT_BLOCKS         3
 
 #elif SOURCE_DIBAS
 // channelized complex input
@@ -53,6 +56,9 @@
 #define N_SOURCE_NODES              8
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
 #define SMOOTH_SCALE                1024
+#define N_INPUT_BLOCKS          3
+#define N_DEBUG_INPUT_BLOCKS    0
+#define N_OUTPUT_BLOCKS         3
 
 #elif SOURCE_FAST
 // non-channelized real input
@@ -71,6 +77,9 @@
 #define N_SOURCE_NODES              8
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
 #define SMOOTH_SCALE                (8*1024)
+#define N_INPUT_BLOCKS          24
+#define N_DEBUG_INPUT_BLOCKS    0
+#define N_OUTPUT_BLOCKS         3
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
@@ -85,10 +94,6 @@
 #define MIN_POWER_THRESH        10.0
 #define MAXGPUHITS              ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
 #define MAXHITS                 4096
-
-#define N_INPUT_BLOCKS          3
-#define N_DEBUG_INPUT_BLOCKS    0
-#define N_OUTPUT_BLOCKS         3
 
 // The following 3 #define's are needed only by s6_gen_fake_data.
 // Perhaps they should be removed at some point (with a change to
