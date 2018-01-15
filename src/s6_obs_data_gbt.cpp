@@ -120,7 +120,7 @@ int get_obs_gbt_info_from_redis(gbtstatus_t * gbtstatus,
     // in units of seconds
     double cleo_mjd_lag;    
     double mysql_mjd_lag;    
-    const  double cleo_mjd_lag_tolerance  = 100.0;   // allow a 40s delay: cleo heartbeat arrives once per minute 
+    const  double cleo_mjd_lag_tolerance  = 100.0;   // allow a 100s delay: cleo heartbeat arrives once per minute 
     const  double mysql_mjd_lag_tolerance =  40.0;   // allow a 40s delay: mysql MJD should be changing once per second
     static int mysql_mjd_long_lag_count = 0; 
     static int cleo_mjd_long_lag_count  = 0; 
