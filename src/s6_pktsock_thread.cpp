@@ -861,6 +861,7 @@ static void *run(hashpipe_thread_args_t * args)
     uint64_t pktsock_drops_total = 0; // Stats total for socket packet
     struct timespec start, stop;
     struct timespec recv_start, recv_stop;
+    int dumpbool;
 
     while (run_threads()) {
 
@@ -963,6 +964,14 @@ fprintf(stderr, "NETPKTS %d NETDROPS %d\n", pktsock_pkts, pktsock_drops);
 	    elapsed_recv_ns = 0;
 	    elapsed_proc_ns = 0;
 	    packet_count = 0;
+
+        hgeti4(st.buf, "DUMPVOLT", &dumpbool);
+        hputi4(st.buf, "DUMPVOLT", 0);          // reset
+        if(dumpbool) {
+            // dump all raw data to file
+		    hashpipe_info(__FUNCTION__, "dumping voltages to file %s", "raw_voltages_file");
+            // TODO dump the data!
+        }
     }
 
 #if defined TIMING_TEST || defined NET_TIMING_TEST

@@ -41,11 +41,14 @@ typedef struct faststatus {
    double   BIRDIDBM;
    int      BIRDILOC;
 
+   int      DUMPTIME;
+   int      DUMPVOLT;
+
   int     coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
 
 int get_obs_fast_info_from_redis(faststatus_t *faststatus, char *hostname, int port);
-int put_obs_fast_info_to_redis(char * fits_filename, int instance, char *hostname, int port);
+int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, int instance, char *hostname, int port);
 
 #endif  // _S6_OBS_DATA_FAST_H
 
