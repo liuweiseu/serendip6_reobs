@@ -18,8 +18,10 @@
 
 #include <sched.h>
 
+#ifndef SOURCE_FAST
 #include <smmintrin.h>
 #include <immintrin.h>
+#endif
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
@@ -151,6 +153,7 @@ void dump_mcnt_log(int pchan)
 }
 #endif
 
+#ifndef SOURCE_FAST
 static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t n_bytes) {
 //#define bitload256
   __m128i lo128, hi128;
@@ -188,6 +191,7 @@ static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t
 //fprintf(stderr, "In s6_memcpy : end   : p_in = %p p_out = %p\n", p_in, p_out);
   return (void *)out;
 }
+#endif
 
 static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_header)
 {
