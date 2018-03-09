@@ -947,14 +947,25 @@ static void *run(hashpipe_thread_args_t * args)
 
         hputu8(st.buf, "NETPKTS",  pktsock_pkts);
         hputu8(st.buf, "NETDROPS", pktsock_drops);
-//fprintf(stderr, "NETPKTS %d NETDROPS %d\n", pktsock_pkts, pktsock_drops);
 
         hgetu8(st.buf, "NETPKTTL", (long long unsigned int*)&pktsock_pkts_total);
         hgetu8(st.buf, "NETDRPTL", (long long unsigned int*)&pktsock_drops_total);
+
+		double pktsock_drops_percentage       = (double)pktsock_drops / (double)Nm * 100.0; 
+		double pktsock_drops_percentage_total = pktsock_pkts_total == 0 ? 0.0 : 
+												(double)(pktsock_drops_total + pktsock_drops) /
+                                                (double)(pktsock_pkts_total  + pktsock_pkts)  *
+                                                100.0;
+
         hputu8(st.buf, "NETPKTTL", pktsock_pkts_total + pktsock_pkts);
         hputu8(st.buf, "NETDRPTL", pktsock_drops_total + pktsock_drops);
-        hputr4(st.buf, "NETDRPPT", pktsock_pkts_total == 0 ? 0.0 : ((float)(pktsock_drops_total + pktsock_drops) / pktsock_pkts_total) * 100);
-        hputr4(st.buf, "NETDRPPR", pktsock_drops / Nm * 100);
+        hputr4(st.buf, "NETDRPPR", pktsock_drops_percentage);
+        hputr4(st.buf, "NETDRPPT", pktsock_drops_percentage_total); 
+
+#if 0
+fprintf(stderr, "NETPKTS %lu NETDROPS %d NETDRPTL %lu NETDRPPR %lf NETDRPPT %lf\n", 
+pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pktsock_drops_percentage_total);
+#endif
 
         hashpipe_status_unlock_safe(&st);
 
