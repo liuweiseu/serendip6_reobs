@@ -25,6 +25,10 @@ typedef struct etfits_primary_header {
     double freq_res;            // redundant w/ chan_band_width?
     double power_threshold;     // S/N threshold for hit detection
     int smooth_scale;           // number of bins to (moving) box car smooth across 
+#ifdef SOURCE_FAST
+    int beam;
+    int pol;
+#endif
 } etfits_primary_header_t;
 
 typedef struct etfits_integration_header {

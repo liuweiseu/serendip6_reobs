@@ -149,6 +149,10 @@ static void *run(hashpipe_thread_args_t * args)
     uint64_t num_coarse_chan = N_COARSE_CHAN;
     init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, &dv_p, fft_plan_p, 1);
 
+    hashpipe_status_lock_safe(&st);
+    hputr4(st.buf, "POWTHRSH", POWER_THRESH);
+    hashpipe_status_unlock_safe(&st);
+
     while (run_threads()) {
 
         hashpipe_status_lock_safe(&st);
@@ -214,6 +218,9 @@ static void *run(hashpipe_thread_args_t * args)
         memcpy(&db_out->block[curblock_out].header.missed_pkts, 
                &db_in->block[curblock_in].header.missed_pkts, 
                sizeof(uint64_t) * N_BEAM_SLOTS);
+#ifdef SOURCE_FAST
+	db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
+#endif
 
         // only do spectroscopy if there are more than zero channels!
         if(num_coarse_chan) {
@@ -257,7 +264,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
                                      &db_out->block[curblock_out],                  // s6_output_block
                                      dv_p,                                          // dv_p
-									 gpu_sem);										// semaphore to serialize GPU access
+				     gpu_sem);  				    // semaphore to serialize GPU access
 #else
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc   
                                      N_FINE_CHAN,                                   // n_fc     

@@ -350,9 +350,18 @@ int etfits_create(etfits_t * etf) {
     // Form file name 
     time(&time_now);
     localtime_r(&time_now, &tm_now);
+#ifdef SOURCE_FAST
+    sprintf(file_name_str, "%s_%01d_%01d_%04d%02d%02d_%02d%02d%02d", 
+#else
     sprintf(file_name_str, "%s_%04d_%04d%02d%02d_%02d%02d%02d", 
+#endif
             etf->primary_hdr.receiver,
+#ifdef SOURCE_FAST
+	    etf->primary_hdr.beam,
+	    etf->primary_hdr.pol,
+#else
             etf->file_chan,
+#endif
             1900+tm_now.tm_year, 1+tm_now.tm_mon, tm_now.tm_mday, 
             tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec); 
     sprintf(etf->filename_working, "%s_%s_%s.working", etf->basefilename, etf->hostname, file_name_str);  
@@ -853,6 +862,7 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
     firstrow  = 1;
     firstelem = 1;
 
+
     //for(int beam=0; beam < N_BEAMS; beam++) {
     for(int bors=0; bors < N_BORS; bors++) {
         // TODO - this goes through the output block for each beam twice. We could cut
@@ -863,7 +873,11 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
             int hit_j=0;
             nhits_this_input=0;
             for(int hit_i=0; hit_i < (size_t)db->block[block_idx].header.nhits[bors]; hit_i++) {
+#ifdef SOURCE_FAST
+		if(input == 0) {	// only 1 input for FAST but pol could be >= 0
+#else
                 if(db->block[block_idx].pol[bors][hit_i] == input) {
+#endif
                     int this_fine_chan =  db->block[block_idx].fine_chan[bors][hit_i];
                     if(this_fine_chan != 0) {   // ignore the DC bin
                         nhits_this_input++;

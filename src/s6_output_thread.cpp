@@ -133,10 +133,14 @@ static void *run(hashpipe_thread_args_t * args)
         hashpipe_status_lock_safe(&st);
         hputs(st.buf, status_key, "processing");
         hashpipe_status_unlock_safe(&st);
-
         // TODO check mcnt
 
         // get metadata
+#ifdef SOURCE_FAST
+	etf.primary_hdr.beam = floor(db->block[block_idx].header.sid / 2);
+	etf.primary_hdr.pol  = db->block[block_idx].header.sid % 2;
+#endif
+	
         hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
         if(!testmode) {
