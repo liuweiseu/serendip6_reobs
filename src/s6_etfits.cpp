@@ -283,7 +283,8 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
 
     if(! *status_p) write_integration_header_fast(etf, faststatus_p);
 
-    if(! *status_p) nhits = write_ccpwrs(db, block_idx, etf);
+    // no CC powers for FAST (only "one" CC!)
+    //if(! *status_p) nhits = write_ccpwrs(db, block_idx, etf);
 
     if(! *status_p) nhits = write_hits(db, block_idx, etf);
 
