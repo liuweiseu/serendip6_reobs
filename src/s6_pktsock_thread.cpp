@@ -14,6 +14,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 
 #include <sched.h>
@@ -766,6 +768,9 @@ static void *run(hashpipe_thread_args_t * args)
 
     st_p = &st;	// allow global (this source file) access to the status buffer
 
+//fprintf(stderr, "Size of input data buffer block %lf GB\n", sizeof(s6_input_block_t)/(double)(1024*1024*1024));
+//fprintf(stderr, "Size of input data buffer ring  %lf GB\n", sizeof(s6_input_databuf_t)/(double)(1024*1024*1024));
+
 #if 0
     // raise this thread to maximum scheduling priority
     // This was found not to help with peformance, but try it again anyway...
@@ -987,9 +992,39 @@ pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pkts
         hgeti4(st.buf, "DUMPVOLT", &dumpbool);
         hputi4(st.buf, "DUMPVOLT", 0);          // reset
         if(dumpbool) {
-            // dump all raw data to file
-		    hashpipe_info(__FUNCTION__, "dumping voltages to file %s", "raw_voltages_file");
-            // TODO dump the data!
+            	// dump all raw voltages (the input buffer) to file
+		char voltage_filename[256];
+		char hostname[64];
+		int fd, rv;
+       		struct rlimit rl;
+
+		// increase file size limit (TODO only needs to be done once per run)
+		rv = getrlimit(RLIMIT_FSIZE, &rl);
+		if(rv == -1) {
+			perror("getting file size limit");
+		}
+		rl.rlim_cur = 12884908288;		// TODO set to unlimited? 
+		rv = setrlimit(RLIMIT_FSIZE, &rl);
+		if(rv == -1) {
+			perror("setting file size limit");
+		}
+
+            	gethostname(hostname, sizeof(hostname));
+            	sprintf(voltage_filename, "voltage_%s_%d_%lf", hostname, 0, double(time(NULL)/86400.0 + 2440587.5)-2400000.5);  // TODO unix time to MJD should be done via a macro
+		hashpipe_info(__FUNCTION__, "dumping voltages to file %s (%ld bytes)", voltage_filename, sizeof(s6_input_databuf_t));
+
+		fd = open(voltage_filename, O_CREAT|O_WRONLY);
+		if(fd == -1) {
+			perror("opening voltage file");
+		} else {
+			rv = write(fd, db, sizeof(s6_input_databuf_t)); 
+			if(rv == -1) {
+				perror("writing voltage file");
+			} else {
+				fprintf(stderr, "wrote %ld bytes to voltage file\n", rv);
+			}
+		}
+		close(fd);
         }
     }
 
