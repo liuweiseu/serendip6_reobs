@@ -18,6 +18,13 @@
 #include <fcntl.h>
 #include <errno.h>
 
+// for multicasting
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+
 #include <sched.h>
 
 #ifndef SOURCE_FAST
@@ -750,6 +757,71 @@ static int init(hashpipe_thread_args_t *args)
         pthread_exit(NULL);
     }
 
+//#define JOIN_MULTICAST
+#ifdef JOIN_MULTICAST
+    // We are unable to join a multicast group directly via the packet
+    // socket because the "socket option level" (IPPROTO_IP) is not 
+    // valid for packet sockets.  So we open another, generic, socket
+    // at the same IP and port and use this "associate" socket to join
+    // the multicast group.
+
+    char s6_group[32]; 
+    int beam=-1, pol=-1;
+   	struct sockaddr_in addr;
+   	int addrlen, sock, cnt;
+   	struct ip_mreq mreq;
+
+#ifdef SOURCE_S6
+    sprintf(s6_group, "239.0.0.1");     // place holder - not used
+#elif SOURCE_DIBAS
+    sprintf(s6_group, "239.0.0.1");     // place holder - not used
+#elif SOURCE_FAST
+    hashpipe_status_lock_safe(&st);
+    hgeti4(st.buf, "FASTBEAM", &beam);
+    hgeti4(st.buf, "FASTPOL", &pol);
+    hashpipe_status_unlock_safe(&st);
+    if(beam == -1 || pol == -1) {
+        hashpipe_error("s6_pktsock_thread", "beam and pol must come from status shmem which in turn comes from cmd line.");
+        pthread_exit(NULL);
+    }
+    sprintf(s6_group, "239.1.%d.%d", beam, 3+pol);     // pol 0 group ends in 3, pol 1 group ends in 4
+#endif
+
+   	/* set up socket */
+   	sock = socket(AF_INET, SOCK_DGRAM, 0);
+   	if(sock < 0) {
+        hashpipe_error("s6_pktsock_thread", "Error opening multicast associate socket.");
+        pthread_exit(NULL);
+   	}
+   	bzero((char *)&addr, sizeof(addr));
+   	addr.sin_family = AF_INET;
+
+	// turn bindhost into an IP address that we can use in bind()
+	struct ifreq ifr;
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name , bindhost , IFNAMSIZ-1);
+    ioctl(sock, SIOCGIFADDR, &ifr);
+	char * bindhost_addr = inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr);
+   	addr.sin_addr.s_addr = inet_addr(bindhost_addr);
+   	addr.sin_port = htons(bindport);
+   	addrlen = sizeof(addr);
+
+	// bind the associate socket
+    if(bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {	// listen on all interfaces (INADDR_ANY)        
+    	perror("bind");
+	 	exit(1);
+    }    
+
+	// join the associate socket to the multicast group
+	// IP_ADD_MEMBERSHIP causes IGMP group membership report to be sent
+    mreq.imr_multiaddr.s_addr = inet_addr(s6_group);	         
+    mreq.imr_interface.s_addr = inet_addr(bindhost_addr); 
+    if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {	
+        hashpipe_error("s6_pktsock_thread", "Error joining multicast group.");
+        pthread_exit(NULL);
+	}
+#endif  // end JOIN_MULTICAST
+
     // Store packet socket pointer in args
     args->user_data = p_ps;
 #endif
@@ -1013,7 +1085,7 @@ pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pkts
             	sprintf(voltage_filename, "voltage_%s_%d_%lf", hostname, 0, double(time(NULL)/86400.0 + 2440587.5)-2400000.5);  // TODO unix time to MJD should be done via a macro
 		hashpipe_info(__FUNCTION__, "dumping voltages to file %s (%ld bytes)", voltage_filename, sizeof(s6_input_databuf_t));
 
-		fd = open(voltage_filename, O_CREAT|O_WRONLY);
+		fd = open(voltage_filename, O_RDWR, O_CREAT|O_WRONLY);
 		if(fd == -1) {
 			perror("opening voltage file");
 		} else {
