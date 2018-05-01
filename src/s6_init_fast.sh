@@ -29,8 +29,8 @@ instances=(
   # sudo mount -o remount mpol=bind:1 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 1   
   # FRB hashpipe to use numactl --physcpubind=19,21,23 --membind=1
   # heimdall to use CPU 17 and GPU 1
-  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  $log_timestamp" # Instance 0
-  #"--physcpubind=18,20,22 --membind=0 p2p4 0   18  20  22  $log_timestamp" # Instance 1
+  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  0 0  $log_timestamp" # Instance 0
+  #"--physcpubind=18,20,22 --membind=0 p2p4 0   18  20  22  0 1  $log_timestamp" # Instance 1
   #
   # run s6 on NUMA node 1 (odd CPUs on m21) One time setup:
   # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000200		# p2p3 interrupts go to CPU 9 
@@ -41,8 +41,8 @@ instances=(
   # heimdall to use CPU 16 and GPU 0
   # and, optionally...
   # heimdall to use CPU  6 and GPU 0
-  "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  $log_timestamp" # Instance 0
-  "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  $log_timestamp" # Instance 1
+  "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  0 0  $log_timestamp" # Instance 0
+  "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  0 1  $log_timestamp" # Instance 1
   #
   # split s6 between NUMA node 0 and 1 with one heimdall on each side as well. One time setup:
   # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000100  		# NIC p2p3 interrupts go to CPU 8
@@ -51,21 +51,23 @@ instances=(
   # sudo mount -o remount mpol=bind:0 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 0   
   # FRB hashpipe tp use numactl --physcpubind=18,20,22 --membind=0
   # heimdall to use CPU 16/15 and GPU 0/1
-  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  $log_timestamp" # Instance 0
-  #"--physcpubind=19,21,23 --membind=1 p2p4 1   19  21  23  $log_timestamp" # Instance 1
+  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  0 0  $log_timestamp" # Instance 0
+  #"--physcpubind=19,21,23 --membind=1 p2p4 1   19  21  23  0 1  $log_timestamp" # Instance 1
 
 );
 
 function init() {
-  instance=$1
-  numaops=$2
-  membind=$3
-  bindhost=$4
-  gpudev=$5
-  netcpu=$6
-  gpucpu=$7
-  outcpu=$8
-  log_timestamp=$9
+  instance=${1}
+  numaops=${2}
+  membind=${3}
+  bindhost=${4}
+  gpudev=${5}
+  netcpu=${6}
+  gpucpu=${7}
+  outcpu=${8}
+  beam=${9}
+  pol=${10}
+  log_timestamp=${11}
 
   if [ -z "${numaops}" ]
   then
@@ -99,6 +101,8 @@ function init() {
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
     -o GPUDEV=$gpudev                  \
+    -o FASTBEAM=$beam                  \
+    -o FASTPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread    
@@ -111,6 +115,8 @@ function init() {
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
     -o GPUDEV=$gpudev                  \
+    -o FASTBEAM=$beam                  \
+    -o FASTPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread        \
