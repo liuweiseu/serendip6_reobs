@@ -717,7 +717,7 @@ static int init(hashpipe_thread_args_t *args)
 #elif SOURCE_DIBAS
     int bindport = 60000;
 #elif SOURCE_FAST
-    int bindport = 12345;
+    int bindport = 12346;
 #endif
 
     hashpipe_status_t st = args->st;
@@ -755,9 +755,19 @@ static int init(hashpipe_thread_args_t *args)
     if (rv!=HASHPIPE_OK) {
         hashpipe_error("s6_pktsock_thread", "Error opening pktsock.");
         pthread_exit(NULL);
+    } else {
+        hashpipe_error("s6_pktsock_thread", "pktsock %d bound to %s.", p_ps->fd, bindhost);
     }
 
-//#define JOIN_MULTICAST
+#define REUSE_PKT_SOCK
+#ifdef REUSE_PKT_SOCK
+   int optval = 1;
+   if (setsockopt(p_ps->fd,SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        hashpipe_error("hashpipe_udp_init", "so_reuseaddr failed");
+   }
+#endif
+
+#define JOIN_MULTICAST
 #ifdef JOIN_MULTICAST
     // We are unable to join a multicast group directly via the packet
     // socket because the "socket option level" (IPPROTO_IP) is not 
@@ -793,6 +803,15 @@ static int init(hashpipe_thread_args_t *args)
         hashpipe_error("s6_pktsock_thread", "Error opening multicast associate socket.");
         pthread_exit(NULL);
    	}
+
+//#define REUSE_ASSOC_SOCK
+#ifdef REUSE_ASSOC_SOCK
+   int optval = 1;
+   if (setsockopt(sock,SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        hashpipe_error("hashpipe_udp_init", "so_reuseaddr failed");
+   }
+#endif
+
    	bzero((char *)&addr, sizeof(addr));
    	addr.sin_family = AF_INET;
 
@@ -803,7 +822,9 @@ static int init(hashpipe_thread_args_t *args)
     ioctl(sock, SIOCGIFADDR, &ifr);
 	char * bindhost_addr = inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr);
    	addr.sin_addr.s_addr = inet_addr(bindhost_addr);
-   	addr.sin_port = htons(bindport);
+	//addr.sin_addr.s_addr=htonl(INADDR_ANY); 
+   	//addr.sin_port = htons(bindport);
+   	addr.sin_port = htons(12346);
    	addrlen = sizeof(addr);
 
 	// bind the associate socket
@@ -814,11 +835,14 @@ static int init(hashpipe_thread_args_t *args)
 
 	// join the associate socket to the multicast group
 	// IP_ADD_MEMBERSHIP causes IGMP group membership report to be sent
+fprintf(stderr, "joining...\n");
     mreq.imr_multiaddr.s_addr = inet_addr(s6_group);	         
     mreq.imr_interface.s_addr = inet_addr(bindhost_addr); 
     if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {	
         hashpipe_error("s6_pktsock_thread", "Error joining multicast group.");
         pthread_exit(NULL);
+	} else {
+	hashpipe_error("s6_pktsock_thread", "Joining %s to multicast group %s.", bindhost_addr, s6_group);
 	}
 #endif  // end JOIN_MULTICAST
 
@@ -895,7 +919,7 @@ static void *run(hashpipe_thread_args_t * args)
     initialize_block(db, Nm, 0, 0, 0);
 
     /* Read network params */
-    int bindport = 21302;
+    int bindport = 21302;	// TODO why is this here?
     size_t max_packet_size = 8 + (N_COARSE_CHAN * N_BYTES_PER_CHAN * N_SPECTRA_PER_PACKET) + 8 + 16;    // + 16 for 2 8byte interframe gaps
 //fprintf(stderr, "max_packet_size = %lu\n", max_packet_size);
 

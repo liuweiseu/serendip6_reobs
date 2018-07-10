@@ -32,6 +32,7 @@ instances=(
   #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  0 0  $log_timestamp" # Instance 0
   #"--physcpubind=18,20,22 --membind=0 p2p4 0   18  20  22  0 1  $log_timestamp" # Instance 1
   #
+  # Production config:
   # run s6 on NUMA node 1 (odd CPUs on m21) One time setup:
   # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000200		# p2p3 interrupts go to CPU 9 
   # sudo ~jeffc/bin/set_irq_cpu.csh 326 00020000		# p2p4 interrupts go to CPU 17
@@ -100,6 +101,7 @@ function init() {
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
+    -o BINDPORT=12346                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
@@ -114,6 +116,7 @@ function init() {
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
+    -o BINDPORT=12346                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
