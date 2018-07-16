@@ -35,6 +35,7 @@
 #include "hashpipe.h"
 #include "s6_databuf.h"
 #include "s6_logger.h"
+#include "fitshead.h"
 
 #define DEBUG_NET
 
@@ -1049,8 +1050,8 @@ static void *run(hashpipe_thread_args_t * args)
         hputu8(st.buf, "NETPKTS",  pktsock_pkts);
         hputu8(st.buf, "NETDROPS", pktsock_drops);
 
-        hgetu8(st.buf, "NETPKTTL", (long long unsigned int*)&pktsock_pkts_total);
-        hgetu8(st.buf, "NETDRPTL", (long long unsigned int*)&pktsock_drops_total);
+        hgetu8(st.buf, "NETPKTTL", &pktsock_pkts_total);
+        hgetu8(st.buf, "NETDRPTL", &pktsock_drops_total);
 
 		double pktsock_drops_percentage       = (double)pktsock_drops / (double)Nm * 100.0; 
 		double pktsock_drops_percentage_total = pktsock_pkts_total == 0 ? 0.0 : 
