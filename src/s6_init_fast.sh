@@ -7,7 +7,9 @@ VERS6GW=0.1.0                   \
 PATH="$(dirname $0):${PATH}"
 
 hostname=`hostname -s`
-net_thread=${1:-s6_pktsock_thread}
+#net_thread=${1:-s6_pktsock_thread}
+net_thread="s6_pktsock_thread"
+beam=$1
 
 # Remove old semaphore
 echo removing old semaphore, if any
@@ -42,8 +44,8 @@ instances=(
   # heimdall to use CPU 16 and GPU 0
   # and, optionally...
   # heimdall to use CPU  6 and GPU 0
-  "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  0 0  $log_timestamp" # Instance 0
-  "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  0 1  $log_timestamp" # Instance 1
+  "--physcpubind=11,13,15 --membind=0,1 p2p1 1   11  13  15  ${beam} 0  $log_timestamp" # Instance 0
+  "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  ${beam} 1  $log_timestamp" # Instance 1
   #
   # split s6 between NUMA node 0 and 1 with one heimdall on each side as well. One time setup:
   # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000100  		# NIC p2p3 interrupts go to CPU 8
@@ -89,6 +91,7 @@ function init() {
     # GBT
     # FAST
     bindhost="p2p$((3+instance))"
+    #bindhost="p2p1"
     #bindhost="p2p$((4-instance))"
     #bindhost="eth$((3+2*instance))"
     echo "binding $net_thread to $bindhost"
@@ -101,7 +104,7 @@ function init() {
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
-    -o BINDPORT=12346                  \
+    -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
@@ -116,7 +119,7 @@ function init() {
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
     -o BINDHOST=$bindhost              \
-    -o BINDPORT=12346                  \
+    -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
