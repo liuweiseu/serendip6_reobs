@@ -586,7 +586,12 @@ static inline uint64_t process_packet(
 	}
 
 	// Decrement missed packet counter
+#ifdef SOURCE_FAST
+	s6_input_databuf_p->block[pkt_block_i].header.missed_pkts[0]--;    // FAST: sid (encoding beam and pol) is constant 
+									   //  for a given instance and there is only 1 BORS
+#else
 	s6_input_databuf_p->block[pkt_block_i].header.missed_pkts[pkt_header.sid]--;    // TODO GBT - is this correct?  sid is constant for a given instance
+#endif
 
 	// Calculate starting points for unpacking this packet into block's data buffer.
 	// Point to payload (after S6 header)
