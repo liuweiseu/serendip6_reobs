@@ -382,7 +382,7 @@ int etfits_create(etfits_t * etf) {
 
     // Check to see if file was successfully created
     if (*status_p) {
-        hashpipe_error(__FUNCTION__, "Error creating sdfits file from template");
+        hashpipe_error(__FUNCTION__, "Error creating sdfits file from template %s", template_file);
         //fprintf(stderr, "Error creating sdfits file from template.\n");
         fits_report_error(stderr, *status_p);
     } else {
