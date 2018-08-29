@@ -63,8 +63,9 @@
 #elif SOURCE_FAST
 // non-channelized real input
 #define N_POLS_PER_BEAM             1
+#define N_POLS_PER_BEAM_TOTAL       2
 #define N_BYTES_PER_SAMPLE      	1
-#define N_BEAMS                     1
+#define N_BEAMS                     19
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
 #define N_TIME_SAMPLES              ((uint64_t) 512*1024*1024)               
@@ -74,7 +75,7 @@
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
 #define N_BORS                      (N_SUBSPECTRA_PER_SPECTRUM)
-#define N_SOURCE_NODES              8
+#define N_SOURCE_NODES              (N_BEAMS * N_POLS_PER_BEAM_TOTAL)
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
 #define SMOOTH_SCALE                (8*1024)
 #define N_INPUT_BLOCKS          24
