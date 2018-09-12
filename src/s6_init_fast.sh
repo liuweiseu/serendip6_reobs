@@ -10,13 +10,14 @@ hostname=`hostname -s`
 #net_thread=${1:-s6_pktsock_thread}
 net_thread="s6_pktsock_thread"
 beam=$1
+beam=$1
 
 # Remove old semaphore
 echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for two instances.
-instance_i=("0" "1")
+instance_i=("1" "2")
 #instance_i=("0")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
@@ -44,7 +45,8 @@ instances=(
   # heimdall to use CPU 16 and GPU 0
   # and, optionally...
   # heimdall to use CPU  6 and GPU 0
-  "--physcpubind=11,13,15 --membind=0,1 p2p1 1   11  13  15  ${beam} 0  $log_timestamp" # Instance 0
+  " place holder for unused instance 0.  FRB hashpipe uses instance 0"
+  "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  ${beam} 0  $log_timestamp" # Instance 0
   "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  ${beam} 1  $log_timestamp" # Instance 1
   #
   # split s6 between NUMA node 0 and 1 with one heimdall on each side as well. One time setup:
@@ -90,7 +92,8 @@ function init() {
     #bindhost="eth$((2+2*instance))"
     # GBT
     # FAST
-    bindhost="p2p$((3+instance))"
+    #bindhost="p2p$((3+instance))"
+    bindhost="p2p$((2+instance))"
     #bindhost="p2p1"
     #bindhost="p2p$((4-instance))"
     #bindhost="eth$((3+2*instance))"
