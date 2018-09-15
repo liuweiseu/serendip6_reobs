@@ -278,7 +278,7 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
         etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
         etf->hits_hdr[i].ra      = faststatus_p->POINTRA;
         etf->hits_hdr[i].dec     = faststatus_p->POINTDEC;
-        etf->hits_hdr[i].beampol = i;       
+        etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
     }
 
     if(! *status_p) write_integration_header_fast(etf, faststatus_p);
