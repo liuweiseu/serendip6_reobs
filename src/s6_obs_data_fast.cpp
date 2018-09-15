@@ -157,12 +157,14 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     } 
 #endif
 
+#if 0
     // Time
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET UNIXTIME      TIMETIM TIME"))) {
          faststatus->TIMETIM = atoi(reply->element[0]->str);
          faststatus->TIME    = atof(reply->element[1]->str);
          freeReplyObject(reply);
     } 
+#endif
 
     // Receiver
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET REC      RECTIM RECEIVER"))) {
@@ -171,6 +173,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
          freeReplyObject(reply);
     } 
 
+#if 0
     // Telescope pointing
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET POINTING      POINTTIM POINTRA POINTDEC"))) {
          faststatus->POINTTIM = atoi(reply->element[0]->str);
@@ -179,6 +182,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
          freeReplyObject(reply);
     } 
 
+#endif
     // Clock synth
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET CLOCKSYN      CLOCKTIM CLOCKFRQ CLOCKDBM CLOCKLOC"))) {
         faststatus->CLOCKTIM = atoi(reply->element[0]->str);
@@ -188,6 +192,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         freeReplyObject(reply);
     } 
 
+#if 0
     // Birdie synth
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET BIRDISYN      BIRDITIM BIRDIFRQ BIRDIDBM BIRDILOC"))) {
         faststatus->BIRDITIM = atoi(reply->element[0]->str);
@@ -203,6 +208,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         faststatus->DUMPVOLT = atof(reply->element[1]->str);
         freeReplyObject(reply);
     } 
+#endif
 
     if(c) redisFree(c);       // TODO do I really want to free each time?
 
