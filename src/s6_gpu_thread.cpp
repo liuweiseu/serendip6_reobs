@@ -125,11 +125,14 @@ static void *run(hashpipe_thread_args_t * args)
 #endif
 
     // init s6GPU
-    int gpu_dev=0;          // default to 0
-    int maxhits = MAXHITS; // default
+    int gpu_dev=0;          			// default to 0
+    int maxhits = MAXHITS; 				// default
+	float power_thresh = POWER_THRESH;	// default
     hashpipe_status_lock_safe(&st);
     hgeti4(st.buf, "GPUDEV", &gpu_dev);
     hgeti4(st.buf, "MAXHITS", &maxhits);
+    hgetr4(st.buf, "POWTHRSH", &power_thresh);
+    hputr4(st.buf, "POWTHRSH", power_thresh);
     hashpipe_status_unlock_safe(&st);
     init_device(gpu_dev);
 	char gpu_sem_name[256];
@@ -149,9 +152,9 @@ static void *run(hashpipe_thread_args_t * args)
     uint64_t num_coarse_chan = N_COARSE_CHAN;
     init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, &dv_p, fft_plan_p, 1);
 
-    hashpipe_status_lock_safe(&st);
-    hputr4(st.buf, "POWTHRSH", POWER_THRESH);
-    hashpipe_status_unlock_safe(&st);
+    //hashpipe_status_lock_safe(&st);
+    //hputr4(st.buf, "POWTHRSH", POWER_THRESH);
+    //hashpipe_status_unlock_safe(&st);
 
     while (run_threads()) {
 
@@ -223,10 +226,10 @@ static void *run(hashpipe_thread_args_t * args)
 #endif
 
         // only do spectroscopy if there are more than zero channels!
+        size_t total_hits = 0;
         if(num_coarse_chan) {
             // do spectroscopy and hit detection on this block.
             // spectroscopy() writes directly to the output buffer.
-            size_t total_hits = 0;
 #ifdef SOURCE_S6
             // At AO, data are grouped by beam
             int n_bors = N_BEAMS;
@@ -258,7 +261,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      bors_i,                                        // bors         
                                      maxhits,                                       // maxhits
                                      MAXGPUHITS,                                    // maxgpuhits
-                                     POWER_THRESH,                                  // power_thresh
+                                     power_thresh,                                  // power_thresh
                                      SMOOTH_SCALE,                                  // smooth_scale
                                      &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
@@ -273,7 +276,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      bors_i,                                        // bors         
                                      maxhits,                                       // maxhits
                                      MAXGPUHITS,                                    // maxgpuhits
-                                     POWER_THRESH,                                  // power_thresh
+                                     power_thresh,                                  // power_thresh
                                      SMOOTH_SCALE,                                  // smooth_scale
                                      &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
@@ -287,10 +290,12 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                 clock_gettime(CLOCK_MONOTONIC, &stop);
                 elapsed_gpu_ns += ELAPSED_NS(start, stop);
                 gpu_block_count++;
+
             }  //  for(int beam_i = 0; beam_i < N_BEAMS; beam_i++)
         }  // if(num_coarse_chan)
 
         hashpipe_status_lock_safe(&st);
+       	hputi4(st.buf, "NUMHITS", total_hits);
         hputr4(st.buf, "GPUMXERR", max_error);
         hputi4(st.buf, "GPUERCNT", error_count);
         hputi4(st.buf, "GPUMXECT", max_error_count);
