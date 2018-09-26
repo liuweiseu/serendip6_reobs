@@ -227,7 +227,7 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
     unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
     unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
     pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
-//fprintf(stdout, "[%016lx]", raw_header);
+//fprintf(stdout, "[%016lx] beam %d pol %d", raw_header, beam, pol);
 //print_pkt_header(pkt_header);
 #endif
 
@@ -823,9 +823,9 @@ static int init(hashpipe_thread_args_t *args)
 
 	// turn bindhost into an IP address that we can use in bind()
 	struct ifreq ifr;
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name , bindhost , IFNAMSIZ-1);
-    ioctl(sock, SIOCGIFADDR, &ifr);
+    	ifr.ifr_addr.sa_family = AF_INET;
+   	strncpy(ifr.ifr_name , bindhost , IFNAMSIZ-1);
+    	ioctl(sock, SIOCGIFADDR, &ifr);
 	char * bindhost_addr = inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr);
    	addr.sin_addr.s_addr = inet_addr(bindhost_addr);
 	//addr.sin_addr.s_addr=htonl(INADDR_ANY); 
