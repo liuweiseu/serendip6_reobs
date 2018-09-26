@@ -18,7 +18,7 @@ rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for two instances.
 instance_i=("1" "2")
-#instance_i=("0")
+#instance_i=("1")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing from any of the following run scenarios to another it is good practice to run:
@@ -106,6 +106,7 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
@@ -121,6 +122,7 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
