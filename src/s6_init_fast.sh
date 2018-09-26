@@ -21,44 +21,26 @@ instance_i=("1" "2")
 #instance_i=("1")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
-  # NOTE: when changing from any of the following run scenarios to another it is good practice to run:
+  # NOTE: when changing any of the following it is good practice to run:
   # sudo ipcrm -a
   # in order to have initial shared memory allocations occur on the local NUMA node.
   #
-  # run s6 on NUMA node 0 (even CPUs on m21) One time setup:
-  # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000100     		# NIC p2p3 interrupts go to CPU 8
-  # sudo ~jeffc/bin/set_irq_cpu.csh 326 00010000     		# NIC p2p4 interrupts go to CPU 16
-  # sudo ~jeffc/bin/set_irq_cpu.csh 224 00000200     		# NIC p2p1 interrupts go to CPU 9 for FRB hashpipe
-  # sudo mount -o remount mpol=bind:1 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 1   
-  # FRB hashpipe to use numactl --physcpubind=19,21,23 --membind=1
-  # heimdall to use CPU 17 and GPU 1
-  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  0 0  $log_timestamp" # Instance 0
-  #"--physcpubind=18,20,22 --membind=0 p2p4 0   18  20  22  0 1  $log_timestamp" # Instance 1
-  #
   # Production config:
-  # run s6 on NUMA node 1 (odd CPUs on m21) One time setup:
-  # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000200		# p2p3 interrupts go to CPU 9 
-  # sudo ~jeffc/bin/set_irq_cpu.csh 326 00020000		# p2p4 interrupts go to CPU 17
-  # sudo ~jeffc/bin/set_irq_cpu.csh 224 00000100		# NIC p2p1 interrupts to CPU 8 for FRB hashpipe
+  # run s6 on NUMA node 1 (odd CPUs on FAST compute nodes) one time setup:
+  # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000200			# p2p3 interrupts go to CPU 9 
+  # sudo ~jeffc/bin/set_irq_cpu.csh 326 00020000			# p2p4 interrupts go to CPU 17
+  # sudo ~jeffc/bin/set_irq_cpu.csh 224 00000100			# NIC p2p1 interrupts to CPU 8 for FRB hashpipe
   # sudo mount -o remount mpol=bind:0 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 0   
-  # FRB hashpipe tp use numactl --physcpubind=18,20,22 --membind=0
-  # heimdall to use CPU 16 and GPU 0
-  # and, optionally...
-  # heimdall to use CPU  6 and GPU 0
+  #
+  # FRB hashpipe to use: 	numactl --physcpubind=18,20,22 --membind=0
+  # heimdall to use: 		CPU 16 and GPU 0
+  # and, optionally,
+  # second heimdall to use:	CPU  6 and GPU 0
+  #
+  # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  FRB hashpipe uses instance 0"
   "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  ${beam} 0  $log_timestamp" # Instance 0
   "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  ${beam} 1  $log_timestamp" # Instance 1
-  #
-  # split s6 between NUMA node 0 and 1 with one heimdall on each side as well. One time setup:
-  # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000100  		# NIC p2p3 interrupts go to CPU 8
-  # sudo ~jeffc/bin/set_irq_cpu.csh 326 00020000		# NIC p2p4 interrupts go to CPU 17
-  # sudo ~jeffc/bin/set_irq_cpu.csh 224 00000040     		# NIC p2p1 interrupts go to CPU 6 for FRB hashpipe
-  # sudo mount -o remount mpol=bind:0 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 0   
-  # FRB hashpipe tp use numactl --physcpubind=18,20,22 --membind=0
-  # heimdall to use CPU 16/15 and GPU 0/1
-  #"--physcpubind=10,12,14 --membind=0 p2p3 0   10  12  14  0 0  $log_timestamp" # Instance 0
-  #"--physcpubind=19,21,23 --membind=1 p2p4 1   19  21  23  0 1  $log_timestamp" # Instance 1
-
 );
 
 function init() {
