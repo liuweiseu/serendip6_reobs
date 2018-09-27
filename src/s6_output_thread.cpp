@@ -101,18 +101,23 @@ static void *run(hashpipe_thread_args_t * args)
     int block_idx=0;
     int error_count, max_error_count = 0;
     float error, max_error = 0.0;
+	time_t time_start, runsecs;
 
     char current_filename[200] = "\0";  // init as a null string
 
     init_etfits(&etf);                  // init for ETFITS output 
 
+	time_start = time(NULL);
+
     /* Main loop */
     while (run_threads()) {
 
+		runsecs = time(NULL) - time_start;
         hashpipe_status_lock_safe(&st);
         hputi4(st.buf, "OUTBLKIN", block_idx);
         hputs(st.buf, status_key, "waiting");
         hgeti4(st.buf, "RUNALWYS", &run_always);
+        hputi4(st.buf, "RUNSECS", runsecs);
         hashpipe_status_unlock_safe(&st);
 
        // get new data
