@@ -128,12 +128,13 @@ do
     echo Starting instance s6c$mys6cn/$instidx
     init $instidx $args
     echo Instance s6c$mys6cn/$instidx pid $!
-    # Sleep to let instance come up
-    sleep 10
   else
     echo Instance $instidx not defined for host $hostname
   fi
 done
+
+echo Sleeping to let instances come up...
+sleep 10
 
 if [ $net_thread == 's6_pktsock_thread' ]
 then
