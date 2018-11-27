@@ -49,6 +49,11 @@ public:
     //! _stopped_ (ie finished sessions) and the current total time
     inline float getAverageTime() const;
 
+	////////////////////////////////////////////////////////////////////////////////
+	//! Return the value of start_time as a fractional unix time 
+	////////////////////////////////////////////////////////////////////////////////
+	inline float getStartTimeStamp() const;
+
 private:
     // helper functions
   
@@ -138,6 +143,16 @@ Stopwatch::getDiffTime() const
   // time difference in milli-seconds
   return  (float) (1000.0 * ( t_time.tv_sec - start_time.tv_sec) 
                 + (0.001 * (t_time.tv_usec - start_time.tv_usec)) );
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! Return the value of start_time as a fractional unix time 
+////////////////////////////////////////////////////////////////////////////////
+inline float
+Stopwatch::getStartTimeStamp() const 
+{
+  return  (float) start_time.tv_sec + start_time.tv_usec/1000000.0;
 }
 
 #endif // _STOPWATCH_H
