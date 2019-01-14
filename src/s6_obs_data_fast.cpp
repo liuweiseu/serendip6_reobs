@@ -192,6 +192,18 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         freeReplyObject(reply);
     } 
 
+    // ADC RMS's
+    char computehostname[32];
+    char query_string[64];
+	gethostname(computehostname, sizeof(computehostname));
+	sprintf(query_string, "HMGET       ADCRMS_%s       ADCRMSTM ADCRMSP0 ADCRMSP1", computehostname);
+    if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
+        faststatus->ADCRMSTM = atoi(reply->element[0]->str);
+        faststatus->ADCRMSP0 = atof(reply->element[1]->str);
+        faststatus->ADCRMSP1 = atof(reply->element[2]->str);
+        freeReplyObject(reply);
+    } 
+
 #if 0
     // Birdie synth
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET BIRDISYN      BIRDITIM BIRDIFRQ BIRDIDBM BIRDILOC"))) {

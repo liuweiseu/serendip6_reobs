@@ -41,6 +41,10 @@ typedef struct faststatus {
    double   BIRDIDBM;
    int      BIRDILOC;
 
+   int		ADCRMSTM;							// ADC RMS's 
+   double	ADCRMSP0;							// polarization 0
+   double	ADCRMSP1;							// polarization 1
+
    int      DUMPTIME;
    int      DUMPVOLT;
 

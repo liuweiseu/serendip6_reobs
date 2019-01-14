@@ -618,6 +618,10 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "BIRDIDBM", &(faststatus_p->BIRDIDBM), NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "BIRDILOC", &(faststatus_p->BIRDILOC), NULL, status_p);
 
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "ADCRMSTM", &(faststatus_p->ADCRMSTM), NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP0", &(faststatus_p->ADCRMSP0), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP1", &(faststatus_p->ADCRMSP1), NULL, status_p);
+
     // observatory data 
     //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 
 
