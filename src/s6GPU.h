@@ -29,17 +29,9 @@ typedef struct {
     thrust::device_vector<float> * fft_data_p;             
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
 
-//#ifdef TRANSPOSE
-//    thrust::device_vector<char>  * raw_timeseries_rowmaj_p;    // temp time series if we are transposing    
-//#endif
-
 #else	// not SOURCE_FAST
     thrust::device_vector<float2> * fft_data_p;             // 
     thrust::device_vector<char2>  * raw_timeseries_p;       // input time series, correctly ordered
-
-//#ifdef TRANSPOSE
-//    thrust::device_vector<char2>  * raw_timeseries_rowmaj_p;    // temp time series if we are transposing    
-//#endif
 
 #endif	// ifdef SOURCE_FAST
 

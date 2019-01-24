@@ -72,10 +72,6 @@ device_vectors_t * init_device_vectors(int n_element_max, int n_element_utilized
     dv_p->hit_indices_p=0;  
     dv_p->hit_powers_p=0; 
 
-#ifdef TRANSPOSE
-    dv_p->raw_timeseries_rowmaj_p   = new thrust::device_vector<char2>(n_element_max*n_input);
-#endif
-
 #ifndef SOURCE_FAST
     dv_p->hit_indices_p      = new thrust::device_vector<int>();
     dv_p->hit_powers_p       = new thrust::device_vector<float>;
@@ -111,9 +107,6 @@ int init_device(int gpu_dev) {
 
 void delete_device_vectors( device_vectors_t * dv_p) {
 // TODO - is the right way to deallocate thrust vectors?
-#ifdef TRANSPOSE
-    delete(dv_p->raw_timeseries_rowmaj_p);
-#endif
     delete(dv_p->hit_indices_p);      
     delete(dv_p->hit_powers_p);       
     delete(dv_p->hit_baselines_p);    
