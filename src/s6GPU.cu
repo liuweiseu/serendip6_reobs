@@ -57,8 +57,7 @@ float sum_of_times;
 
 cufft_config_t cufft_config;
 
-//int init_device_vectors(int n_element, int n_input, device_vectors_t &dv) {
-device_vectors_t * init_device_vectors(int n_element_max, int n_element_utilized, int n_input) {
+device_vectors_t * init_device_vectors() {
 
     device_vectors_t * dv_p  = new device_vectors_t;
 

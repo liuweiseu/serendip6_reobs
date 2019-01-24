@@ -48,7 +48,7 @@ typedef struct {
     thrust::device_vector<int>    * spectra_indices_p;
 } device_vectors_t;
 
-device_vectors_t * init_device_vectors(int n_element_physical, int n_element_utilized, int n_input);
+device_vectors_t * init_device_vectors();
 
 void delete_device_vectors( device_vectors_t * dv_p);
 

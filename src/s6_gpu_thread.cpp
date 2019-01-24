@@ -34,32 +34,26 @@ int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHand
 
     struct timespec start, stop;
     
-    int num_channels_max, num_channels_utilized;
-
     const char * re[2] = {"re", ""};
 
     if(num_coarse_chan == 0) {  
-        hashpipe_error(__FUNCTION__, "Cannot initialize GPU memory with 0 coarse channels");
+        hashpipe_error(__FUNCTION__, "Cannot configure cuFFT with 0 coarse channels");
         return -1;
     }
 
-    fprintf(stderr, "%sinitializing GPU structures for %ld coarse channels...\n", initial ? re[1] : re[0], num_coarse_chan);
+    fprintf(stderr, "%sconfiguring cuFFT for %ld coarse channels...\n", initial ? re[1] : re[0], num_coarse_chan);
 
+    // Initialize GPU vectors...
     if(!initial) {
         delete_device_vectors(*dv_p);
     }
+    *dv_p = init_device_vectors();
 
-    // Configure GPU vectors...
+    // Configure cuFFT...
     // The maximum number of coarse channels is one determining factor 
     // of input data buffer size and is set at compile time. At run time 
     // the number of coarse channels can change but this does not affect 
     // the size of the input data buffer.  
-    //num_channels_max = N_COARSE_CHAN_PER_SUBSPECTRUM   * N_FINE_CHAN;
-    num_channels_max = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_FINE_CHAN;
-    num_channels_utilized = num_coarse_chan * N_FINE_CHAN;
-    *dv_p = init_device_vectors(num_channels_max, num_channels_utilized, N_POLS_PER_BEAM);
-
-    // Configure cuFFT...
     cufft_config.nfft_     = N_TIME_SAMPLES;                                
     cufft_config.ostride   = 1;                                
     cufft_config.idist     = 1;                                
