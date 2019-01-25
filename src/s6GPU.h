@@ -79,7 +79,6 @@ int spectroscopy(int n_cc,
                  uint64_t * input_data,
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
-                 device_vectors_t    *dv_p,
 				 sem_t * gpu_sem);
 
 #if 0

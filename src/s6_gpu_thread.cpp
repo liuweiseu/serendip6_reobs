@@ -28,7 +28,7 @@
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
-int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHandle *fft_plan_p, int initial) {
+int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initial) {
 
     extern cufft_config_t cufft_config;
 
@@ -42,12 +42,6 @@ int init_gpu_memory(uint64_t num_coarse_chan, device_vectors_t **dv_p, cufftHand
     }
 
     fprintf(stderr, "%sconfiguring cuFFT for %ld coarse channels...\n", initial ? re[1] : re[0], num_coarse_chan);
-
-    // Initialize GPU vectors...
-    if(!initial) {
-        delete_device_vectors(*dv_p);
-    }
-    *dv_p = init_device_vectors();
 
     // Configure cuFFT...
     // The maximum number of coarse channels is one determining factor 
@@ -142,9 +136,8 @@ static void *run(hashpipe_thread_args_t * args)
     cufftHandle fft_plan;
     cufftHandle *fft_plan_p = &fft_plan;
 
-    device_vectors_t *dv_p = NULL;
     uint64_t num_coarse_chan = N_COARSE_CHAN;
-    init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, &dv_p, fft_plan_p, 1);
+    init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, fft_plan_p, 1);
 
     //hashpipe_status_lock_safe(&st);
     //hputr4(st.buf, "POWTHRSH", POWER_THRESH);
@@ -181,7 +174,7 @@ static void *run(hashpipe_thread_args_t * args)
         if(db_in->block[curblock_in].header.num_coarse_chan != num_coarse_chan) {
             // number of coarse channels has changed!  Redo GPU memory / FFT plan
             num_coarse_chan = db_in->block[curblock_in].header.num_coarse_chan;
-            init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, &dv_p, fft_plan_p, 0);
+            init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, fft_plan_p, 0);
         }
 #endif
 
@@ -260,8 +253,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
                                      &db_out->block[curblock_out],                  // s6_output_block
-                                     dv_p,                                          // dv_p
-				     gpu_sem);  				    // semaphore to serialize GPU access
+                                     gpu_sem);                                      // semaphore to serialize GPU access
 #else
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc   
                                      N_FINE_CHAN,                                   // n_fc     
@@ -275,8 +267,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
                                      n_bytes_per_bors,                              // input_data_bytes                         /2
                                      &db_out->block[curblock_out],                  // s6_output_block
-                                     dv_p,                                          // dv_p
-									 gpu_sem);										// semaphore to serialize GPU access
+                                     gpu_sem);                                      // semaphore to serialize GPU access
 #endif
 
 //fprintf(stderr, "spectroscopy() returned %ld for beam %d\n", nhits, beam_i);

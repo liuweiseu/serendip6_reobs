@@ -692,7 +692,6 @@ int spectroscopy(int n_cc,         		// N coarse chans
                  uint64_t * input_data,
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
-                 device_vectors_t    *dv_p,
 				 sem_t * gpu_sem) {
 
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
@@ -710,6 +709,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
     size_t nhits;
     //size_t prior_nhits=0;
     size_t total_nhits=0;
+	static device_vectors_t *dv_p = NULL;
 
     if(track_gpu_memory) {
         char comment[256];
@@ -717,6 +717,8 @@ int spectroscopy(int n_cc,         		// N coarse chans
                 n_element, n_input_data_bytes, N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_FINE_CHAN * N_POLS_PER_BEAM);
         get_gpu_mem_info((const char *)comment);
     }
+
+	if(!dv_p) dv_p = init_device_vectors(); 
 
     char2 * h_raw_timeseries = (char2 *)input_data;
 
@@ -866,7 +868,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  uint64_t * input_data,
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
-                 device_vectors_t    *dv_p,
 				 sem_t * gpu_sem) {
 
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
@@ -886,6 +887,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     cufftHandle fft_plan;
     cufftHandle *fft_plan_p = &fft_plan;
     int pol = n_pol;                // for ease of code reading
+	static device_vectors_t *dv_p = NULL;
 
     sum_of_times=0;
 
@@ -895,6 +897,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
                 n_pol, n_element, n_input_data_bytes, (double)n_input_data_bytes/1024/1024/1024, input_data);
         get_gpu_mem_info((const char *)comment);
     }
+
+	if(!dv_p) dv_p = init_device_vectors(); 
 
     char * h_raw_timeseries = (char *)input_data;
 
