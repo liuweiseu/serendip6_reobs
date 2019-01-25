@@ -31,17 +31,10 @@ typedef struct {
     int     odist;          // distance between 1st output elements of consecutive batches
 } cufft_config_t;
 
-typedef struct {
 #ifdef SOURCE_FAST
+typedef struct {
     thrust::device_vector<float> * fft_data_p;             
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
-
-#else	// not SOURCE_FAST
-    thrust::device_vector<float2> * fft_data_p;             // 
-    thrust::device_vector<char2>  * raw_timeseries_p;       // input time series, correctly ordered
-
-#endif	// ifdef SOURCE_FAST
-
     thrust::device_vector<float2> * fft_data_out_p;         
     thrust::device_vector<float>  * powspec_p;              // detected power spectra
     thrust::device_vector<float>  * scanned_p;              // mean powers
@@ -54,6 +47,26 @@ typedef struct {
     thrust::device_vector<float>  * spectra_sums_p;
     thrust::device_vector<int>    * spectra_indices_p;
 } device_vectors_t;
+
+#else	// not SOURCE_FAST
+
+typedef struct {
+    thrust::device_vector<float> * fft_data_p;             
+    thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
+    thrust::device_vector<float2> * fft_data_out_p;         
+    thrust::device_vector<float>  * powspec_p;              // detected power spectra
+    thrust::device_vector<float>  * scanned_p;              // mean powers
+    thrust::device_vector<float>  * baseline_p;             // running mean by region, using scanned_p
+    thrust::device_vector<float>  * normalised_p;           // normalized spectra, using baseline_p.  This is S/N.
+    thrust::device_vector<int>    * hit_indices_p;          // indexes subset of normalized, baseline, and powspec for hits that exceed threshold
+    thrust::device_vector<float>  * hit_powers_p;           // non-normalized hit powers, reported to caller
+    thrust::device_vector<float>  * hit_baselines_p;        // mean power at hit bins, reported to caller. 
+                                                            //   hit_power[n]/hit_baseline[n] = S/N
+    thrust::device_vector<float>  * spectra_sums_p;
+    thrust::device_vector<int>    * spectra_indices_p;
+} device_vectors_t;
+
+#endif	// ifdef SOURCE_FAST
 
 device_vectors_t * init_device_vectors();
 
