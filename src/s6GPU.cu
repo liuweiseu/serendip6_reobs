@@ -21,13 +21,6 @@ using std::endl;
 #include <thrust/for_each.h>
 #include <thrust/functional.h>
 
-// include cub allocator and its required includes
-#include <iostream>
-#include <sstream>
-#include <thrust/system/cuda/vector.h>
-#include <cub/util_allocator.cuh>
-#include "cub_allocator.hpp"
-
 #include "s6GPU.h"
 #include "stopwatch.hpp"
 

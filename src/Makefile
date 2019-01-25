@@ -10,7 +10,7 @@ S6_LOCATION =
 S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I. \
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis \
-		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++11
 S6OBS_AO_PROG_CCFLAGS = -g -lstdc++ \
 		     -I/usr/include/tcl \
 		     -I/usr/local/include \

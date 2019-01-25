@@ -12,6 +12,13 @@
 #include <thrust/binary_search.h>
 #include <thrust/device_ptr.h>
 
+// include cub allocator and its required includes
+#include <iostream>
+#include <sstream>
+#include <thrust/system/cuda/vector.h>
+#include <cub/util_allocator.cuh>
+#include "cub_allocator.hpp"
+
 #include "s6_databuf.h"
 
 typedef struct {
