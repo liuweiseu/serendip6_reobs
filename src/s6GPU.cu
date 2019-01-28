@@ -557,6 +557,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
 }    
 
 #ifdef SOURCE_FAST
+#if 0
 int reduce_coarse_channels(device_vectors_t * dv_p, 
                            s6_output_block_t *s6_output_block,  
                            int n_cc, 
@@ -599,6 +600,7 @@ int reduce_coarse_channels(device_vectors_t * dv_p,
 
     return(0);
 }
+#endif
 
 #else
 
@@ -906,8 +908,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     if(use_total_gpu_timer) total_gpu_timer.start();
 
-    // we allocate the device raw data vector for both pols at once so that we can do the copy in one go
-    dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);   // two pols
+    //dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
+    dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
 
     // Copy to the device
 //print_current_time("right before time series copy");
@@ -930,19 +932,25 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_timer) timer.reset();
 
     // allocate (and delete - see below) 
-    dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
-    dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
-    dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
+    //dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
+    //dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
+    //dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
+    dv_p->hit_indices_p      = new cub_device_vector<int>();                        // 0 initial size
+    dv_p->hit_powers_p       = new cub_device_vector<float>;                        // "
+    dv_p->hit_baselines_p    = new cub_device_vector<float>;                        // "
 
-    dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    //dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
     if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
-    dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
+    //dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
+    dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element);            // FFT output
     if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
     //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
 
-    dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
+    //dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
+    dv_p->powspec_p = new cub_device_vector<float>(n_element);             // power spectrum
     if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
 
     if(use_timer) timer.start();
@@ -958,6 +966,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     sum_of_times += timer.getTime();
     if(use_timer) cout << "Unpack time:\t" << timer.getTime() << endl;
     if(use_timer) timer.reset();
+    delete(dv_p->raw_timeseries_p);   
     // end fluffing to FFT input
     
     // Input pointer varies with input.
@@ -997,11 +1006,14 @@ cudaThreadSynchronize();
     //reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
 
     // Allocate GPU memory for power normalization
-    dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    //dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    dv_p->baseline_p         = new cub_device_vector<float>(n_element);
     if(track_gpu_memory) get_gpu_mem_info("right after baseline vector allocation");
-    dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    //dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    dv_p->normalised_p       = new cub_device_vector<float>(n_element);
     if(track_gpu_memory) get_gpu_mem_info("right after normalized vector allocation");
-    dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    //dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    dv_p->scanned_p          = new cub_device_vector<float>(n_element);
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
 
     // Power normalization
@@ -1063,7 +1075,7 @@ cudaThreadSynchronize();
     delete(dv_p->hit_indices_p);  
     delete(dv_p->hit_powers_p); 
 
-    delete(dv_p->raw_timeseries_p);   
+    //delete(dv_p->raw_timeseries_p);   
 
 	sem_post(gpu_sem);
 //print_current_time("right after sem post");
@@ -1073,6 +1085,8 @@ cudaThreadSynchronize();
     if(use_total_gpu_timer) cout << "Sum of times:\t" << sum_of_times << endl;
     if(use_total_gpu_timer) cout << "Uncounted time:\t" << total_gpu_timer.getTime() - sum_of_times << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
+
+	get_singleton_device_allocator()->free_all_cached();	// free all cub allocations
     
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;

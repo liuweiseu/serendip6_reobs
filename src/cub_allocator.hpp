@@ -1,5 +1,9 @@
 // This file provides a convenient interface to the CUB caching allocator class.
 
+// Allocation requests below (BIN_GROWTH ^ MIN_BIN) are rounded up to (BIN_GROWTH ^ MIN_BIN).
+#define BIN_GROWTH (2)
+#define MIN_BIN    (2)
+
 class cub_device_allocator {
   cub::CachingDeviceAllocator _allocator;
 public:
@@ -36,12 +40,16 @@ public:
   void deallocate(pointer ptr, size_t num_bytes) {
     _allocator.DeviceFree(ptr);
   }
+
+    void free_all_cached() {
+	_allocator.FreeAllCached();
+  }
 };
 
 static cub_device_allocator* get_singleton_device_allocator() {
   // These parameters can be tuned if necessary to optimize the memory usage
   //static cub_device_allocator instance(/*bin_growth=*/4, /*min_bin=*/6);
-  static cub_device_allocator instance(/*bin_growth=*/16, /*min_bin=*/8);
+  static cub_device_allocator instance(/*bin_growth=*/BIN_GROWTH, /*min_bin=*/MIN_BIN);
   return &instance;
 }
 
@@ -71,4 +79,4 @@ public:
 
 // This convenience requires compiling with C++11 support (nvcc -std=c++11)
 template<typename T>
-using device_vector = thrust::device_vector<T, thrust_device_allocator<T> >;
+using cub_device_vector = thrust::device_vector<T, thrust_device_allocator<T> >;
