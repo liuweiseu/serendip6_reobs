@@ -29,6 +29,7 @@ using std::endl;
 
 //#define USE_TIMER
 //#define USE_TOTAL_GPU_TIMER
+//#define USE_MEM_TIMER
 #ifdef USE_TIMER
     bool use_timer=true;
 #else
@@ -38,6 +39,11 @@ using std::endl;
     bool use_total_gpu_timer=true;
 #else
     bool use_total_gpu_timer=false;
+#endif
+#ifdef USE_MEM_TIMER
+    bool use_mem_timer=true;
+#else
+    bool use_mem_timer=false;
 #endif
 float sum_of_times;
 
@@ -876,6 +882,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     Stopwatch timer; 
     Stopwatch total_gpu_timer;
+    Stopwatch mem_timer;
     int n_element = n_cc*n_fc;       // number of elements in GPU structures
     size_t nhits;
     size_t total_nhits=0;
@@ -908,8 +915,11 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     if(use_total_gpu_timer) total_gpu_timer.start();
 
+    if(use_mem_timer) mem_timer.start();
     //dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
     dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
+    if(use_mem_timer) mem_timer.stop();
+    if(use_mem_timer) cout << "mem new raw_timeseries time:\t" << mem_timer.getTime() << endl;
 
     // Copy to the device
 //print_current_time("right before time series copy");
