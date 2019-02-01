@@ -414,7 +414,8 @@ void compute_power_spectrum(device_vectors_t *dv_p) {
     if(use_timer) timer.start();
 //fprintf(stderr, "In compute_power_spectrum 2 %p %p\n", thrust::raw_pointer_cast(dv_p->fft_data_out_p), thrust::raw_pointer_cast(dv_p->powspec_p));
 //fprintf(stderr, "In compute_power_spectrum 2 %p %lu %p %lu\n", dv_p->fft_data_out_p, dv_p->fft_data_out_p->size() * sizeof(float2), dv_p->powspec_p, dv_p->powspec_p->size() * sizeof(float));
-    thrust::transform(dv_p->fft_data_out_p->begin(), dv_p->fft_data_out_p->end(),
+	// Here we throw away (the -1) the "padding" element required on the output of the R2C FFT
+    thrust::transform(dv_p->fft_data_out_p->begin(), dv_p->fft_data_out_p->end()-1,
                       dv_p->powspec_p->begin(),
                       compute_complex_power());
 //fprintf(stderr, "In compute_power_spectrum 3\n");
@@ -983,7 +984,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     if(use_mem_timer) mem_timer.start();
     //dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
-    dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element);            // FFT output
+    dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element+1);            // FFT output
     if(use_mem_timer) mem_timer.stop();
     sum_of_mem_times += mem_timer.getTime();
     if(use_mem_timer) cout << "mem new fft_data_out_p time:\t" << mem_timer.getTime() << endl;
@@ -1047,6 +1048,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
     do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
+
+	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());
 
     compute_power_spectrum      (dv_p);                                         // compute power spectrum
 
