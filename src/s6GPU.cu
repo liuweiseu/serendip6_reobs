@@ -1072,6 +1072,14 @@ cudaThreadSynchronize();
     if(use_mem_timer) cout << "mem delete fft_data_out_p time:\t" << mem_timer.getTime() << endl;
     if(use_mem_timer) mem_timer.reset();    
 
+    if(use_mem_timer) mem_timer.start();
+    get_singleton_device_allocator()->free_all_cached();    // free all cub cached allocations
+    if(use_mem_timer) mem_timer.stop();
+    if(use_mem_timer) cout << "mem free_all_cached 1 time:\t" << mem_timer.getTime() << endl;
+    sum_of_mem_times += mem_timer.getTime();
+    //if(use_mem_timer) cout << "sum of mem time:\t" << sum_of_mem_times << endl;      
+    if(use_mem_timer) mem_timer.reset();
+
     if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
 
     // reduce coarse channels to mean power... we can skip this for FAST
@@ -1216,9 +1224,9 @@ cudaThreadSynchronize();
 //print_current_time("right after sem post");
 
     if(use_mem_timer) mem_timer.start();
-        get_singleton_device_allocator()->free_all_cached();    // free all cub allocations
+    get_singleton_device_allocator()->free_all_cached();    // free all cub allocations
     if(use_mem_timer) mem_timer.stop();
-    if(use_mem_timer) cout << "mem free_all_cached time:\t" << mem_timer.getTime() << endl;
+    if(use_mem_timer) cout << "mem free_all_cached 2 time:\t" << mem_timer.getTime() << endl;
     sum_of_mem_times += mem_timer.getTime();
     //if(use_mem_timer) cout << "sum of mem time:\t" << sum_of_mem_times << endl;      
     if(use_mem_timer) mem_timer.reset();
