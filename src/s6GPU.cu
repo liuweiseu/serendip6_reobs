@@ -1213,7 +1213,6 @@ cudaThreadSynchronize();
 
     //delete(dv_p->raw_timeseries_p);   
 
-	sem_post(gpu_sem);
 //print_current_time("right after sem post");
 
     if(use_mem_timer) mem_timer.start();
@@ -1224,6 +1223,7 @@ cudaThreadSynchronize();
     //if(use_mem_timer) cout << "sum of mem time:\t" << sum_of_mem_times << endl;      
     if(use_mem_timer) mem_timer.reset();
 
+	sem_post(gpu_sem);
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
