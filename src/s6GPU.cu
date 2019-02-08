@@ -157,7 +157,7 @@ inline void get_gpu_mem_info(const char * comment) {
         total_gb = (double)total/(1024*1024*1024);
         free_gb =  (double)free/(1024*1024*1024);
         allocated_gb = total_gb - free_gb;
-        fprintf(stderr, "GPU memory total : %2.2lf GB    allocated : %2.2lf GB (%2.2f%%)    free : %2.2lf GB    (%s)\n", 
+        fprintf(stdout, "GPU memory total : %2.2lf GB    allocated : %2.2lf GB (%2.2f%%)    free : %2.2lf GB    (%s)\n", 
                 total_gb, allocated_gb, (allocated_gb/total_gb)*100, free_gb, comment);
     }
 } 
