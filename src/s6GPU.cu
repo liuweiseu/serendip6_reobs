@@ -55,6 +55,8 @@ float sum_of_mem_times;
     bool track_gpu_memory=false;
 #endif
 
+bool use_thread_sync=false;
+
 cufft_config_t cufft_config;
 
 device_vectors_t * init_device_vectors() {
@@ -403,14 +405,14 @@ void do_fft(cufftHandle *fft_plan, float2* &fft_input_ptr, float2* &fft_output_p
     Stopwatch timer;
     if(use_timer) timer_start(timer);
     execute_fft_plan_c2c(fft_plan, fft_input_ptr, fft_output_ptr);
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "FFT execution time");
 }
 void do_r2c_fft(cufftHandle *fft_plan, float* &fft_input_ptr, float2* &fft_output_ptr) {
     Stopwatch timer;
     if(use_timer) timer_start(timer);
     execute_fft_plan_r2c(fft_plan, fft_input_ptr, fft_output_ptr);
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "FFT execution time");
 }
 
@@ -424,7 +426,7 @@ void compute_power_spectrum(device_vectors_t *dv_p) {
     thrust::transform(dv_p->fft_data_out_p->begin(), dv_p->fft_data_out_p->end()-1,
                       dv_p->powspec_p->begin(),
                       compute_complex_power());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Power spectrum time");
 //fprintf(stderr, "In compute_power_spectrum 3\n");
 }
@@ -476,7 +478,7 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
                                                           divide_by<int>(n_fc)),
                                   dv_p->powspec_p->begin(),
                                   dv_p->scanned_p->begin());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Scan time");
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after scan");
     
@@ -489,7 +491,7 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
                       running_mean_by_region(smooth_scale,
                                              n_fc,
                                              d_scanned_ptr));
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Running mean time");
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after running mean by region");
     //thrust::for_each(dv_p->baseline_p->begin(), dv_p->baseline_p->end(), printf_functor());
@@ -504,7 +506,7 @@ void normalize_power_spectrum(device_vectors_t *dv_p) {
                       dv_p->normalised_p->begin(),
                       //_1 / _2);
                       thrust::divides<float>());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Normalisation time");
 }
 
@@ -533,7 +535,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
     nhits = nhits > maxhits ? maxhits : nhits;       // overrun protection - hits beyond maxgpuhits are thrown away
     dv_p->hit_indices_p->resize(nhits);                 // this will only be resized downwards
                                             
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Hit extraction time");
     
     if(use_timer) timer_start(timer);
@@ -546,7 +548,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
     thrust::gather(dv_p->hit_indices_p->begin(), dv_p->hit_indices_p->end(),
                    dv_p->baseline_p->begin(),
                    dv_p->hit_baselines_p->begin());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Hit info gather time");
 
     return nhits;
@@ -737,7 +739,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
                       dv_p->raw_timeseries_p->end(),
                       dv_p->fft_data_p->begin(),
                       convert_complex_8b_to_float());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
     if(use_timer) timer.stop();
     sum_of_times += timer.getTime();
@@ -965,7 +967,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
                   dv_p->raw_timeseries_p->end(),
                   dv_p->fft_data_p->begin(),
                   convert_real_8b_to_float());
-    cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Unpack time");
     if(track_gpu_memory) get_gpu_mem_info("right after 8bit to float transform");
 
@@ -1001,7 +1003,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // done with the timeseries and FFTs - delete the associated GPU memory
     if(track_gpu_memory) get_gpu_mem_info("right after compute power spectrum");
     //delete(dv_p->raw_timeseries_p);   // two pols        
-cudaThreadSynchronize();
+if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     delete(dv_p->fft_data_p);         
@@ -1046,7 +1048,7 @@ cudaThreadSynchronize();
     // Power normalization
     compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
-cudaThreadSynchronize();
+if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     delete(dv_p->scanned_p);          
@@ -1095,7 +1097,7 @@ cudaThreadSynchronize();
 #endif
         
     // delete remaining GPU memory
-cudaThreadSynchronize();
+if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     delete dv_p->powspec_p;          
