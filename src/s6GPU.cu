@@ -30,6 +30,7 @@ using std::endl;
 #define USE_TIMER
 #define USE_TOTAL_GPU_TIMER
 #define USE_MEM_TIMER
+#define USE_SEM_TIMER
 #ifdef USE_TIMER
     bool use_timer=true;
 #else
@@ -44,6 +45,11 @@ using std::endl;
     bool use_mem_timer=true;
 #else
     bool use_mem_timer=false;
+#endif
+#ifdef USE_SEM_TIMER
+    bool use_sem_timer=true;
+#else
+    bool use_sem_timer=false;
 #endif
 float sum_of_times;
 float sum_of_mem_times;
@@ -869,6 +875,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     Stopwatch timer; 
     Stopwatch total_gpu_timer;
     Stopwatch mem_timer;
+    Stopwatch sem_timer;
     int n_element = n_cc*n_fc;       // number of elements in GPU structures
     size_t nhits;
     size_t total_nhits=0;
@@ -879,6 +886,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     sum_of_times=0;
     sum_of_mem_times=0;    
+    float sem_time=0;    
 
     if(track_gpu_memory) {
         char comment[256];
@@ -916,9 +924,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
 
 //print_current_time("right before sem wait");
-    if(use_timer) timer_start(timer);
+    if(use_sem_timer) timer_start(sem_timer);
 	sem_wait(gpu_sem);
-    if(use_timer) sum_of_times += timer_stop(timer, "sem wait time");
+    if(use_sem_timer) sem_time = timer_stop(sem_timer, "sem wait time");
 //print_current_time("right after sem wait");
 
     // allocate (and delete - see below) 
@@ -1134,11 +1142,12 @@ if(use_thread_sync) cudaThreadSynchronize();
 	sem_post(gpu_sem);
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
-    if(use_total_gpu_timer) cout << "Total GPU time:\t" << total_gpu_timer.getTime() << endl;
-    if(use_total_gpu_timer) cout << "Sum of times:\t" << sum_of_times << endl;
-    if(use_total_gpu_timer) cout << "Uncounted time:\t" << total_gpu_timer.getTime() - sum_of_times << endl;
+    if(use_total_gpu_timer) cout << "Sum of GPU times:         \t" << sum_of_times << endl;
+    if(use_mem_timer)       cout << "Sum of mem times:         \t" << sum_of_mem_times << endl;    
+    if(use_sem_timer)       cout << "Sem time:                 \t" << sem_time << endl;    
+    if(use_total_gpu_timer) cout << "Uncounted time:           \t" << total_gpu_timer.getTime() - (sum_of_times + sum_of_mem_times + sem_time) << endl;
+    if(use_total_gpu_timer) cout << "Total spectroscopy() time:\t" << total_gpu_timer.getTime() << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
-    if(use_mem_timer) cout << "sum of mem time:\t" << sum_of_mem_times << endl;    
 
     cout<<"------------------------------------------------------------------------------------------"<<endl;
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
