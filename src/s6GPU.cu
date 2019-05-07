@@ -1102,7 +1102,6 @@ if(use_thread_sync) cudaThreadSynchronize();
 #endif
     } // end for i<nhits 
     if(use_timer) sum_of_times += timer_stop(timer, "Copy to return vector time");
-#endif
         
     // delete remaining GPU memory
 if(use_thread_sync) cudaThreadSynchronize();
@@ -1153,3 +1152,5 @@ if(use_thread_sync) cudaThreadSynchronize();
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;
 }
+
+#endif
