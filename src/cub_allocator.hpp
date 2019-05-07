@@ -3,6 +3,7 @@
 // Allocation requests below (BIN_GROWTH ^ MIN_BIN) are rounded up to (BIN_GROWTH ^ MIN_BIN).
 #define BIN_GROWTH (2)
 #define MIN_BIN    (2)
+#define DEBUG      false
 
 class cub_device_allocator {
   cub::CachingDeviceAllocator _allocator;
@@ -23,7 +24,7 @@ public:
                        size_t max_cached_bytes=INVALID_SIZE)
     : _allocator(bin_growth, min_bin, INVALID_BIN, max_cached_bytes,
                  // Set debug=true to see log output of all allocations
-                 /*skip_cleanup=*/true, /*debug=*/false) {}
+                 /*skip_cleanup=*/true, /*debug=*/DEBUG) {}
 
   pointer allocate(size_type num_bytes) {
     pointer ptr;
