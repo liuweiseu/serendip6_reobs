@@ -1218,8 +1218,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_total_gpu_timer) total_gpu_timer.start();
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
-    dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
+    dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
+    //dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new raw_timeseries time");
 
     // Copy to the device
@@ -1238,40 +1238,40 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     // allocate (and delete - see below) 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
-    dv_p->hit_indices_p      = new cub_device_vector<int>();                        // 0 initial size
+    dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
+    //dv_p->hit_indices_p      = new cub_device_vector<int>();                        // 0 initial size
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_indices_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
-    dv_p->hit_powers_p       = new cub_device_vector<float>;                        // "
+    dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
+    //dv_p->hit_powers_p       = new cub_device_vector<float>;                        // "
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_powers_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
-    dv_p->hit_baselines_p    = new cub_device_vector<float>;                        // "
+    dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
+    //dv_p->hit_baselines_p    = new cub_device_vector<float>;                        // "
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_baselines_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
     //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
-    //dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
-    dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
+    dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    //dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
     if(use_mem_timer) timer_start(mem_timer);
     //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
-    //dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
-    dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element+1);            // FFT output
+    dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
+    //dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element+1);            // FFT output
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_out_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
 
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
-    dv_p->powspec_p = new cub_device_vector<float>(n_element);             // power spectrum
+    dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
+    //dv_p->powspec_p = new cub_device_vector<float>(n_element);             // power spectrum
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new powspec_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
@@ -1328,9 +1328,9 @@ if(use_thread_sync) cudaThreadSynchronize();
     delete(dv_p->fft_data_out_p);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem delete fft_data_out_p time");
 
-    if(use_mem_timer) timer_start(mem_timer);
-    get_singleton_device_allocator()->free_all_cached();    // free all cub cached allocations
-    if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem free_all_cached 1 time");
+    //if(use_mem_timer) timer_start(mem_timer);
+    //get_singleton_device_allocator()->free_all_cached();    // free all cub cached allocations
+    //if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem free_all_cached 1 time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after post power spectrum deletes");
 
@@ -1338,24 +1338,24 @@ if(use_thread_sync) cudaThreadSynchronize();
     //reduce_coarse_channels(dv_p, s6_output_block,  n_cc, pol, n_fc, bors);
 
     // Allocate GPU memory for power normalization
-    //dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
 
     if(use_mem_timer) timer_start(mem_timer);
-    dv_p->baseline_p         = new cub_device_vector<float>(n_element);
+    dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    //dv_p->baseline_p         = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new baseline_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after baseline vector allocation");
-    //dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
 
     if(use_mem_timer) timer_start(mem_timer);
-    dv_p->normalised_p       = new cub_device_vector<float>(n_element);
+    dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    //dv_p->normalised_p       = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new normalised_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after normalized vector allocation");
-    //dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
 
     if(use_mem_timer) timer_start(mem_timer);
-    dv_p->scanned_p          = new cub_device_vector<float>(n_element);
+    dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    //dv_p->scanned_p          = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new scanned_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
@@ -1441,9 +1441,9 @@ if(use_thread_sync) cudaThreadSynchronize();
 
 //print_current_time("right after sem post");
 
-    if(use_mem_timer) timer_start(mem_timer);
-    get_singleton_device_allocator()->free_all_cached();    // free all cub allocations
-    if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem free_all_cached 2 time");
+    //if(use_mem_timer) timer_start(mem_timer);
+    //get_singleton_device_allocator()->free_all_cached();    // free all cub allocations
+   	//if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem free_all_cached 2 time");
 
 	sem_post(gpu_sem);
 
