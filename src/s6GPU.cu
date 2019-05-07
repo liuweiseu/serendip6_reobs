@@ -930,40 +930,40 @@ int spectroscopy(int n_cc, 				// N coarse chans
 //print_current_time("right after sem wait");
 
     // allocate (and delete - see below) 
-    //dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
-    //dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
-    //dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->hit_indices_p      = new thrust::device_vector<int>();                        // 0 initial size
     dv_p->hit_indices_p      = new cub_device_vector<int>();                        // 0 initial size
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_indices_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->hit_powers_p       = new thrust::device_vector<float>;                        // "
     dv_p->hit_powers_p       = new cub_device_vector<float>;                        // "
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_powers_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->hit_baselines_p    = new thrust::device_vector<float>;                        // "
     dv_p->hit_baselines_p    = new cub_device_vector<float>;                        // "
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_baselines_p time");
 
-    //dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
+    //dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
     dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_p time");
 
-    //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
     if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
-    //dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
+    //dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
     dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element+1);            // FFT output
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_out_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
-    //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
 
 
-    //dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
     if(use_mem_timer) timer_start(mem_timer);
+    //dv_p->powspec_p = new thrust::device_vector<float>(n_element);             // power spectrum
     dv_p->powspec_p = new cub_device_vector<float>(n_element);             // power spectrum
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new powspec_p time");
 
