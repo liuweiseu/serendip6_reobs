@@ -32,6 +32,7 @@ typedef struct {
 } cufft_config_t;
 
 #ifdef SOURCE_FAST
+#define USE_CUB
 typedef struct {
     cub_device_vector<float> * fft_data_p;             
     cub_device_vector<char>  * raw_timeseries_p;        // input time series, correctly ordered
