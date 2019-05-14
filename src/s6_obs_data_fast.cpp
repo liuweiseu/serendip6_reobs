@@ -125,6 +125,9 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     redisReply *reply;
     int rv = 0;
 
+    char computehostname[32];
+    char query_string[64];
+
     double mjd_now;  
 
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
@@ -140,6 +143,8 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         }
         exit(1);
     }
+
+	gethostname(computehostname, sizeof(computehostname));
 
     // make sure redis is being updated!
     // example from AO:
@@ -173,9 +178,10 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
          freeReplyObject(reply);
     } 
 
-#if 0
+#if 1
     // Telescope pointing
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET POINTING      POINTTIM POINTRA POINTDEC"))) {
+	sprintf(query_string, "HMGET       PNT_%s       PNTTIME PNTRA PNTDEC", computehostname);
+    if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
          faststatus->POINTTIM = atoi(reply->element[0]->str);
          faststatus->POINTRA  = atof(reply->element[1]->str);
          faststatus->POINTDEC = atof(reply->element[2]->str);
@@ -193,9 +199,6 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     } 
 
     // ADC RMS's
-    char computehostname[32];
-    char query_string[64];
-	gethostname(computehostname, sizeof(computehostname));
 	sprintf(query_string, "HMGET       ADCRMS_%s       ADCRMSTM ADCRMSP0 ADCRMSP1", computehostname);
     if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
         faststatus->ADCRMSTM = atoi(reply->element[0]->str);
