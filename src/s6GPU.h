@@ -32,8 +32,11 @@ typedef struct {
 } cufft_config_t;
 
 #ifdef SOURCE_FAST
-#define USE_CUB
-#ifdef USE_CUB
+// uncomment exactly one REALLOC_x
+#define REALLOC_CUB
+//#define REALLOC_STD
+//#define REALLOC_NONE
+#if defined REALLOC_CUB
 typedef struct {
     cub_device_vector<float> * fft_data_p;             
     cub_device_vector<char>  * raw_timeseries_p;        // input time series, correctly ordered
@@ -48,7 +51,8 @@ typedef struct {
     cub_device_vector<float>  * spectra_sums_p;
     cub_device_vector<int>    * spectra_indices_p;
 } device_vectors_t;
-#else	// not using CUB
+#endif	
+#if defined REALLOC_STD || defined REALLOC_NONE
 typedef struct {
     thrust::device_vector<float> * fft_data_p;             
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
@@ -63,7 +67,7 @@ typedef struct {
     thrust::device_vector<float>  * spectra_sums_p;
     thrust::device_vector<int>    * spectra_indices_p;
 } device_vectors_t;
-#endif	// using CUB or not
+#endif	
 
 #else	// not SOURCE_FAST
 
