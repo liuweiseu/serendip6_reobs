@@ -1068,6 +1068,7 @@ static void *run(hashpipe_thread_args_t * args)
         hputu8(st.buf, "NETDRPTL", pktsock_drops_total + pktsock_drops);
         hputr4(st.buf, "NETDRPPR", pktsock_drops_percentage);
         hputr4(st.buf, "NETDRPPT", pktsock_drops_percentage_total); 
+        hgeti4(st.buf, "DUMPVOLT", &dumpbool);	// has a voltage dump been requested?
 
 #if 0
 fprintf(stderr, "NETPKTS %lu NETDROPS %d NETDRPTL %lu NETDRPPR %lf NETDRPPT %lf\n", 
@@ -1091,9 +1092,12 @@ pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pkts
 	    elapsed_proc_ns = 0;
 	    packet_count = 0;
 
-        hgeti4(st.buf, "DUMPVOLT", &dumpbool);
-        hputi4(st.buf, "DUMPVOLT", 0);          // reset
         if(dumpbool) {
+		
+        	hashpipe_status_lock_busywait_safe(&st);
+        	hputi4(st.buf, "DUMPVOLT", 0);          // reset so we only do it once
+        	hashpipe_status_unlock_safe(&st);
+
             	// dump all raw voltages (the input buffer) to file
 		char voltage_filename[256];
 		char hostname[64];
