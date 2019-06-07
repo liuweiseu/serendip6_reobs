@@ -12,6 +12,9 @@ net_thread="s6_pktsock_thread"
 beam=$1
 beam=$1
 
+iface_pol0=`myinterface.sh voltpol0`
+iface_pol1=`myinterface.sh voltpol1`
+
 # Remove old semaphore
 echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
@@ -26,21 +29,18 @@ instances=(
   # in order to have initial shared memory allocations occur on the local NUMA node.
   #
   # Production config:
-  # run s6 on NUMA node 1 (odd CPUs on FAST compute nodes) one time setup:
-  # sudo ~jeffc/bin/set_irq_cpu.csh 292 00000200			# p2p3 interrupts go to CPU 9 
-  # sudo ~jeffc/bin/set_irq_cpu.csh 326 00020000			# p2p4 interrupts go to CPU 17
-  # sudo ~jeffc/bin/set_irq_cpu.csh 224 00000100			# NIC p2p1 interrupts to CPU 8 for FRB hashpipe
-  # sudo mount -o remount mpol=bind:0 /mnt/fast_frb_data 	# mount FRB ramdisk on NUMA node 0   
+  # run s6 on NUMA node 1 (odd CPUs on FAST compute nodes).  See script config_numa_affinity.sh 
+  # for one time (per system boot) setup.
   #
-  # FRB hashpipe to use: 	numactl --physcpubind=18,20,22 --membind=0
-  # heimdall to use: 		CPU 16 and GPU 0
+  # fastburst to use: 		numactl --physcpubind=14,16,18 --membind=0
+  # heimdall to use: 		CPU 12 and GPU 0
   # and, optionally,
-  # second heimdall to use:	CPU  6 and GPU 0
+  # second heimdall to use:	CPU  8 and GPU 0
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
-  " place holder for unused instance 0.  FRB hashpipe uses instance 0"
-  "--physcpubind=11,13,15 --membind=0,1 p2p3 1   11  13  15  ${beam} 0  $log_timestamp" # Instance 0
-  "--physcpubind=19,21,23 --membind=0,1 p2p4 1   19  21  23  ${beam} 1  $log_timestamp" # Instance 1
+  " place holder for unused instance 0.  fastburst uses instance 0"
+  "--physcpubind=7,9,11   --membind=0,1 ${iface_pol0} 1   7  9 11  ${beam} 0  $log_timestamp" # Instance 0
+  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 1
 );
 
 function init() {
@@ -75,7 +75,7 @@ function init() {
     # GBT
     # FAST
     #bindhost="p2p$((3+instance))"
-    bindhost="p2p$((2+instance))"
+    #bindhost="p2p$((2+instance))"
     #bindhost="p2p1"
     #bindhost="p2p$((4-instance))"
     #bindhost="eth$((3+2*instance))"
@@ -98,8 +98,8 @@ function init() {
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread    
 
-  numactl $numaops $membind            \
-  hashpipe -p serendip6 -I $instance   \
+  sudo numactl $numaops $membind            \
+  /usr/local/bin/hashpipe -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
