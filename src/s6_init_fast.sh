@@ -114,8 +114,8 @@ function init() {
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread        \
      < /dev/null                       \
-    1> ${hostname}.out.${log_timestamp}.${pol} \
-    2> ${hostname}.err.${log_timestamp}.${pol} &
+    1> s6.${hostname}.out.${log_timestamp}.${pol} \
+    2> s6.${hostname}.err.${log_timestamp}.${pol} &
 }
 
 # Start all instances
