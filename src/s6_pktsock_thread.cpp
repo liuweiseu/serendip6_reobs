@@ -224,10 +224,12 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
     pkt_header->mcnt        =  raw_header & 0x00FFFFFFFFFFFFFF;	// "serial number" in FAST parlance
     unsigned char raw_sid   =  raw_header >> 56;
 //fprintf(stdout, "raw sid %x\n", raw_sid);
-    unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam 
+    unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam (1 indexed!)
     unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
-    pkt_header->sid         =  beam * 2 + pol;		    // source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
-//fprintf(stdout, "[%016lx] beam %d pol %d", raw_header, beam, pol);
+    pkt_header->sid         =  (beam-1) * 2 + pol;	// we re-index to start at 0 for compatibility and arithmetic ease
+							//   thus sid (and so, BORSPOL) starts at 0
+							//   source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
+//fprintf(stdout, "[%016lx] beam %d pol %d ", raw_header, beam, pol);
 //print_pkt_header(pkt_header);
 #endif
 
@@ -520,7 +522,7 @@ static inline uint64_t process_packet(
 			s6_input_databuf_p->block[binfo.block_i].header.missed_pkts[i], i);
 	    }
 #endif
-#define LOG_RMS
+//#define LOG_RMS
 #ifdef LOG_RMS
         // only do this once per block! Ie, when the block is done.
         int coarse_chan, retval;
@@ -974,7 +976,7 @@ static void *run(hashpipe_thread_args_t * args)
     uint64_t pktsock_drops_total = 0; // Stats total for socket packet
     struct timespec start, stop;
     struct timespec recv_start, recv_stop;
-    int dumpbool;
+    int dumpbool = 0;
 
     while (run_threads()) {
 
