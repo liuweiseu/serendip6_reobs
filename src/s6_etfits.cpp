@@ -274,8 +274,8 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     // populate hits header data
     //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
-        //etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
-        etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
+        etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
+        //etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
         etf->hits_hdr[i].ra      = faststatus_p->POINTRA;
         etf->hits_hdr[i].dec     = faststatus_p->POINTDEC;
         etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
@@ -622,6 +622,10 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP0", &(faststatus_p->ADCRMSP0), NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP1", &(faststatus_p->ADCRMSP1), NULL, status_p);
 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ZKDTIME", &(faststatus_p->ZKDTIME), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EQTRA", &(faststatus_p->EQTRA), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EQDDEC", &(faststatus_p->EQDDEC), NULL, status_p);
+
     // observatory data 
     //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 
 
@@ -828,7 +832,11 @@ int write_hits_header(etfits_t * etf, int borspol, size_t nhits, size_t missed_p
         if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, TFIELDS, (char **)&ttype, (char **)&tform, NULL, (char *)"ETHITS", status_p);
     }
 
+#ifdef SOURCE_FAST
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
+#else
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
+#endif
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "RA",      &(etf->hits_hdr[borspol].ra),      NULL, status_p);   
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "DEC",     &(etf->hits_hdr[borspol].dec),     NULL, status_p);   
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "BORSPOL", &(etf->hits_hdr[borspol].beampol), NULL, status_p);   

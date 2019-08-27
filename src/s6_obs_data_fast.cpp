@@ -11,6 +11,48 @@
 #include "s6_obs_data_fast.h"
 
 //----------------------------------------------------------
+#define MAX_STRING_LENGTH 32  
+#define MAX_TOKENS         4
+int tokenize_string(char * &pInputString, char * Delimiter, char * pToken[MAX_TOKENS]) {
+//----------------------------------------------------------
+  int i=0;
+
+  pToken[i] = strtok(pInputString, Delimiter);
+  i++;
+
+  while ((pToken[i] = strtok(NULL, Delimiter)) != NULL){
+    i++;
+	if(i >= MAX_TOKENS) {
+		i = -1;
+		break;
+	}
+  }
+
+  return i;
+}
+
+//----------------------------------------------------------
+int coord_string_to_decimal(char * &coord_string, double * coord_decimal) {
+//----------------------------------------------------------
+// Takes string of the form DH:MM:SS, including any sign, and
+// returns decimal degrees or hours.  DH can be degrees or hours.
+
+	char * pTokens[MAX_TOKENS];
+	int rv;
+
+	rv = tokenize_string(coord_string, ":", pTokens);
+	if(rv == 3) {
+		*coord_decimal = (atof(pTokens[0]) + atof(pTokens[1])/60.0 + atof(pTokens[2])/3600.0);
+		rv = 0;
+	} else {
+        hashpipe_error(__FUNCTION__, "Malformed coordinate string : %s", coord_string);
+		rv = 1;
+	}
+
+	return(rv);
+}
+
+//----------------------------------------------------------
 static redisContext * redis_connect(char *hostname, int port) {
 //----------------------------------------------------------
     redisContext *c;
@@ -78,19 +120,17 @@ static int s6_redis_get(redisContext *c, redisReply ** reply, const char * query
 int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, int instance, char *hostname, int port) {
 //----------------------------------------------------------
     redisContext *c;
+    redisContext *c_observatory;
     redisReply *reply;
     char key[200];
     char time_str[200];
     char my_hostname[200];
     int rv=0;
 
-    // TODO - sane rv
+	const char * host_observatory = "10.128.8.8";
+	int port_observatory = 6379;
 
-    // TODO make c static?
-    c = redis_connect(hostname, port);
-    if (!c) {
-        rv = 1;
-    }
+    // TODO - sane rv
 
 #if 0
     if(!rv) {
@@ -122,8 +162,12 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 //----------------------------------------------------------
 
     redisContext *c;
+    redisContext *c_observatory;
     redisReply *reply;
     int rv = 0;
+
+	const char * host_observatory = "10.128.8.8";
+	int port_observatory = 6379;
 
     char computehostname[32];
     char query_string[64];
@@ -132,6 +176,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
 
+	// Local instrument DB
     // TODO make c static?
     c = redisConnectWithTimeout(hostname, port, timeout);
     if (c == NULL || c->err) {
@@ -143,6 +188,19 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         }
         exit(1);
     }
+
+	// Observatory DB
+    c_observatory = redisConnectWithTimeout((char *)host_observatory, port_observatory, timeout);
+    if (c == NULL || c->err) {
+        if (c) {
+            hashpipe_error(__FUNCTION__, c->errstr);
+            redisFree(c);
+        } else {
+            hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
+        }
+        exit(1);
+    }
+	rv = s6_redis_get(c_observatory, &reply,"select 2");
 
 	gethostname(computehostname, sizeof(computehostname));
 
@@ -225,7 +283,20 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     } 
 #endif
 
+	// Get observatory data
+	
+	// observtory data timestamp
+	if(!rv && !(rv = s6_redis_get(c_observatory, &reply,"hmget ZK_KY_DATA Timestamp"))) {
+		faststatus->ZKDTIME = atof(reply->element[0]->str)/1000.0;	// millisec to sec
+	}
+
+	// coordinates
+	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ZK_COORDINATE Equator_T_RA Equator_D_DEC");
+	if(!rv)	rv = coord_string_to_decimal(reply->element[0]->str, &(faststatus->EQTRA));
+	if(!rv) rv = coord_string_to_decimal(reply->element[1]->str, &(faststatus->EQDDEC));
+   
     if(c) redisFree(c);       // TODO do I really want to free each time?
+    if(c_observatory) redisFree(c_observatory);       // TODO do I really want to free each time?
 
     return rv;         
 }

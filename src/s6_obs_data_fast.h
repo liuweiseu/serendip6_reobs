@@ -22,7 +22,8 @@ typedef struct faststatus {
 
 // TODO - use time_t?
    long     TIMETIM;                            // unix time
-   long     TIME;
+   //long     TIME;
+   double   TIME;
 
    long     RECTIM;                             // receiver
    char     RECEIVER[FASTSTATUS_STRING_SIZE];  
@@ -47,6 +48,10 @@ typedef struct faststatus {
 
    int      DUMPTIME;
    int      DUMPVOLT;
+
+   double   ZKDTIME;						   // ZK_KY_DATA Timestamp : seconds.fraction past the unix epoch
+   double   EQTRA;							   // ZK_COORDINATE Equator_T_RA
+   double   EQDDEC;							   // ZK_COORDINATE Equator_D_DEC
 
   int     coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
