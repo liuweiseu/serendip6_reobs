@@ -205,6 +205,8 @@ static void *run(hashpipe_thread_args_t * args)
         db_out->block[curblock_out].header.mcnt            = db_in->block[curblock_in].header.mcnt;
         db_out->block[curblock_out].header.coarse_chan_id  = db_in->block[curblock_in].header.coarse_chan_id;
         db_out->block[curblock_out].header.num_coarse_chan = db_in->block[curblock_in].header.num_coarse_chan;
+        db_out->block[curblock_out].header.time_sec        = db_in->block[curblock_in].header.time_sec;
+        db_out->block[curblock_out].header.time_nsec       = db_in->block[curblock_in].header.time_nsec;
         memcpy(&db_out->block[curblock_out].header.missed_pkts, 
                &db_in->block[curblock_in].header.missed_pkts, 
                sizeof(uint64_t) * N_BEAM_SLOTS);

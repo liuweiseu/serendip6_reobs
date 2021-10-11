@@ -476,6 +476,7 @@ static inline uint64_t process_packet(
     uint64_t cur_mcnt;
     uint64_t netmcnt = -1; // Value to return (!=-1 is stored in status memory)
     int i = 0;
+    struct timespec time_spec;
 #if N_DEBUG_INPUT_BLOCKS == 1
     static uint64_t debug_remaining = -1ULL;
     static off_t debug_offset = 0;
@@ -514,6 +515,11 @@ static inline uint64_t process_packet(
 	// If the packet is for the second half of the next block (i.e. current
 	// block + 3/2 blocks), then "current" block is done.
 	if(pkt_mcnt_dist >= 3*(Nm/2)) {
+
+		// time stamp the block that we are calling done
+		clock_gettime(CLOCK_REALTIME, &time_spec);
+		s6_input_databuf_p->block[binfo.block_i].header.time_sec  = time_spec.tv_sec;
+		s6_input_databuf_p->block[binfo.block_i].header.time_nsec = time_spec.tv_nsec;
 
 #if 0
 	    for(i=0; i<N_BEAMS; i++) {

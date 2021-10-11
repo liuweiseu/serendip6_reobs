@@ -36,7 +36,8 @@ typedef struct etfits_integration_header {
 } etfits_integration_header_t;
     
 typedef struct etfits_hits_header {
-    time_t time;
+    //time_t time;
+	double time;
     double ra;
     double dec;
     int    beampol;

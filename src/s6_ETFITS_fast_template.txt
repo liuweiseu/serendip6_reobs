@@ -101,7 +101,8 @@ NMATRIX =                    1 / 1 dataset per row
 #
 ### ETFITS hits metadata ###
 #
-TIME    =                    * / unix time of this integration - is this fine enough res? (TINT)
+#TIME    =                    * / unix time of this integration - is this fine enough res? (TINT)
+TIME    =                    * / unix time (incl fractional sec) of this integration (TDOUBLE)
 RA      =                    * / derived from corrected scram azza (TDOUBLE)
 DEC     =                    * / derived from corrected scram azza (TDOUBLE)
 BORSPOL =                    * / 0-13 beam/pols or 0-15 spectra/pols  (TINT)

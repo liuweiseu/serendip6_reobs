@@ -189,6 +189,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         exit(1);
     }
 
+#if 0
 	// Observatory DB
     c_observatory = redisConnectWithTimeout((char *)host_observatory, port_observatory, timeout);
     if (c == NULL || c->err) {
@@ -201,6 +202,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         exit(1);
     }
 	rv = s6_redis_get(c_observatory, &reply,"select 2");
+#endif
 
 	gethostname(computehostname, sizeof(computehostname));
 
@@ -285,18 +287,20 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 
 	// Get observatory data
 	
+#if 0
 	// observtory data timestamp
 	if(!rv && !(rv = s6_redis_get(c_observatory, &reply,"hmget ZK_KY_DATA Timestamp"))) {
 		faststatus->ZKDTIME = atof(reply->element[0]->str)/1000.0;	// millisec to sec
 	}
 
 	// coordinates
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ZK_COORDINATE Equator_T_RA Equator_D_DEC");
+	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ZK_COORDINATE Equator_T_RA Equator_T_DEC");
 	if(!rv)	rv = coord_string_to_decimal(reply->element[0]->str, &(faststatus->EQTRA));
 	if(!rv) rv = coord_string_to_decimal(reply->element[1]->str, &(faststatus->EQDDEC));
+#endif
    
     if(c) redisFree(c);       // TODO do I really want to free each time?
-    if(c_observatory) redisFree(c_observatory);       // TODO do I really want to free each time?
+//    if(c_observatory) redisFree(c_observatory);       // TODO do I really want to free each time?
 
     return rv;         
 }

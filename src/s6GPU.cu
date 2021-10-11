@@ -27,10 +27,10 @@ using std::endl;
 #include "hashpipe.h"
 #include <time.h>
 
-#define USE_TIMER
-#define USE_TOTAL_GPU_TIMER
-#define USE_MEM_TIMER
-#define USE_SEM_TIMER
+//#define USE_TIMER
+//#define USE_TOTAL_GPU_TIMER
+//#define USE_MEM_TIMER
+//#define USE_SEM_TIMER
 #ifdef USE_TIMER
     bool use_timer=true;
 #else
@@ -54,7 +54,7 @@ using std::endl;
 float sum_of_times;
 float sum_of_mem_times;
 
-#define TRACK_GPU_MEMORY
+//#define TRACK_GPU_MEMORY
 #ifdef TRACK_GPU_MEMORY
     bool track_gpu_memory=true;
 #else
@@ -1510,7 +1510,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     sum_of_mem_times=0;    
     float sem_time=0;    
 
-	fprintf(stderr, "Not reallocating GPU memory\n");
+	//fprintf(stderr, "Not reallocating GPU memory\n");
 
     if(track_gpu_memory) {
         char comment[256];

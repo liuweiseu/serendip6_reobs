@@ -33,9 +33,9 @@ typedef struct {
 
 #ifdef SOURCE_FAST
 // uncomment exactly one REALLOC_x
-#define REALLOC_CUB
+//#define REALLOC_CUB
 //#define REALLOC_STD
-//#define REALLOC_NONE
+#define REALLOC_NONE
 #if defined REALLOC_CUB
 typedef struct {
     cub_device_vector<float> * fft_data_p;             

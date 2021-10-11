@@ -145,7 +145,11 @@ static void *run(hashpipe_thread_args_t * args)
 	etf.primary_hdr.beam = floor(db->block[block_idx].header.sid / 2);
 	etf.primary_hdr.pol  = db->block[block_idx].header.sid % 2;
 #endif
-	
+
+		// time stamp for this block of hits
+		faststatus_p->TIME = db->block[block_idx].header.time_sec +
+						     db->block[block_idx].header.time_nsec/1e9;
+
         hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
         if(!testmode) {
