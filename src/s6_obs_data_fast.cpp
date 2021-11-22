@@ -253,6 +253,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 			faststatus->POINTDEC[beam]  = atof(reply->element[DECi]->str);
 //fprintf(stderr, "beam %d i %d ra %f\n", beam, RAi, atof(reply->element[RAi]->str));
 		}
+		faststatus->CLOCKFRQ = CLOCK_FREQ; 	// hard coded
 	}
    
     if(c) redisFree(c);       // TODO do I really want to free each time?

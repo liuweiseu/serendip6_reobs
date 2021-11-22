@@ -610,6 +610,7 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIMEFRAC", &faststatus_p->TIMEFRAC,   NULL, status_p); 
 
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &faststatus_p->coarse_chan_id,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKFRQ", &faststatus_p->CLOCKFRQ,   NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RECEIVER", &(faststatus_p->RECEIVER), NULL, status_p); 
 
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSX", &(faststatus_p->PHAPOSX), NULL, status_p);
