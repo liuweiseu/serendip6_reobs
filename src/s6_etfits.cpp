@@ -617,29 +617,6 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSZ", &(faststatus_p->PHAPOSZ), NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ANGLEM", &(faststatus_p->ANGLEM), NULL, status_p);
 
-#if 0
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "CLOCKTIM", &(faststatus_p->CLOCKTIM), NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKFRQ", &(faststatus_p->CLOCKFRQ), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKDBM", &(faststatus_p->CLOCKDBM), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "CLOCKLOC", &(faststatus_p->CLOCKLOC), NULL, status_p); 
-
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "BIRDITIM", &(faststatus_p->BIRDITIM), NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "BIRDIFRQ", &(faststatus_p->BIRDIFRQ), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "BIRDIDBM", &(faststatus_p->BIRDIDBM), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "BIRDILOC", &(faststatus_p->BIRDILOC), NULL, status_p);
-
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "ADCRMSTM", &(faststatus_p->ADCRMSTM), NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP0", &(faststatus_p->ADCRMSP0), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMSP1", &(faststatus_p->ADCRMSP1), NULL, status_p);
-
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ZKDTIME", &(faststatus_p->ZKDTIME), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EQTRA", &(faststatus_p->EQTRA), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EQDDEC", &(faststatus_p->EQDDEC), NULL, status_p);
-
-    // observatory data 
-    //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 
-#endif
-
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");
         //fprintf(stderr, "Error writing integration header.\n");

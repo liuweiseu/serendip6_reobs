@@ -210,57 +210,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 
 	gethostname(computehostname, sizeof(computehostname));
 
-    // make sure redis is being updated!
-    // example from AO:
 #if 0
-    if(scram->AGCTIME == prior_agc_time) {
-        no_time_change_count++;
-        hashpipe_warn(__FUNCTION__, "agctime in redis databse has not been updated over %d queries", no_time_change_count);
-        if(no_time_change_count >= no_time_change_limit) {
-            hashpipe_error(__FUNCTION__, "redis databse is static!");
-            rv = 1;
-        }
-    } else {
-        no_time_change_count = 0;
-        prior_agc_time = scram->AGCTIME;
-    } 
-#endif
-
-#if 0
-    // Time
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET UNIXTIME      TIMETIM TIME"))) {
-         faststatus->TIMETIM = atoi(reply->element[0]->str);
-         faststatus->TIME    = atof(reply->element[1]->str);
-         freeReplyObject(reply);
-    } 
-#endif
-
-#if 0
-    // Receiver
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET REC      RECTIM RECEIVER"))) {
-         faststatus->RECTIM =    atoi(reply->element[0]->str);
-         strcpy(faststatus->RECEIVER, reply->element[1]->str);
-         freeReplyObject(reply);
-    } 
-
-    // Telescope pointing
-	sprintf(query_string, "HMGET       PNT_%s       PNTTIME PNTRA PNTDEC", computehostname);
-    if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
-         faststatus->POINTTIM = atoi(reply->element[0]->str);
-         faststatus->POINTRA  = atof(reply->element[1]->str);
-         faststatus->POINTDEC = atof(reply->element[2]->str);
-         freeReplyObject(reply);
-    } 
-
-    // Clock synth
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET CLOCKSYN      CLOCKTIM CLOCKFRQ CLOCKDBM CLOCKLOC"))) {
-        faststatus->CLOCKTIM = atoi(reply->element[0]->str);
-        faststatus->CLOCKFRQ = atof(reply->element[1]->str);
-        faststatus->CLOCKDBM = atof(reply->element[2]->str);
-        faststatus->CLOCKLOC = atoi(reply->element[3]->str);
-        freeReplyObject(reply);
-    } 
-
     // ADC RMS's
 	sprintf(query_string, "HMGET       ADCRMS_%s       ADCRMSTM ADCRMSP0 ADCRMSP1", computehostname);
     if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
@@ -272,15 +222,6 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 #endif
 
 #if 0
-    // Birdie synth
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET BIRDISYN      BIRDITIM BIRDIFRQ BIRDIDBM BIRDILOC"))) {
-        faststatus->BIRDITIM = atoi(reply->element[0]->str);
-        faststatus->BIRDIFRQ = atof(reply->element[1]->str);
-        faststatus->BIRDIDBM = atof(reply->element[2]->str);
-        faststatus->BIRDILOC = atoi(reply->element[3]->str);
-        freeReplyObject(reply);
-    } 
-
     // Raw data dump request
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET DUMPRAW      DUMPTIME DUMPVOLT"))) {
         faststatus->DUMPTIME = atoi(reply->element[0]->str);
@@ -293,58 +234,10 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
 	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget KY_ZK_RUN_DATA_RESULT_HASH TimeStamp Receiver SDP_PhaPos_X SDP_PhaPos_Y SDP_PhaPos_Z SDP_AngleM SDP_Beam00_RA SDP_Beam00_DEC SDP_Beam01_RA SDP_Beam01_DEC SDP_Beam02_RA SDP_Beam02_DEC SDP_Beam03_RA SDP_Beam03_DEC SDP_Beam04_RA SDP_Beam04_DEC SDP_Beam05_RA SDP_Beam05_DEC SDP_Beam06_RA SDP_Beam06_DEC SDP_Beam07_RA SDP_Beam07_DEC SDP_Beam08_RA SDP_Beam08_DEC SDP_Beam09_RA SDP_Beam09_DEC SDP_Beam10_RA SDP_Beam10_DEC SDP_Beam11_RA SDP_Beam11_DEC SDP_Beam12_RA SDP_Beam12_DEC SDP_Beam13_RA SDP_Beam13_DEC SDP_Beam14_RA SDP_Beam14_DEC SDP_Beam15_RA SDP_Beam15_DEC SDP_Beam16_RA SDP_Beam16_DEC SDP_Beam17_RA SDP_Beam17_DEC SDP_Beam18_RA SDP_Beam18_DEC");
-#if 0
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget KY_ZK_RUN_DATA_RESULT_HASH 	\
-								TimeStamp 			\
-								Receiver			\
-								SDP_PhaPos_X			\
-								SDP_PhaPos_Y			\
-								SDP_PhaPos_Z			\
-								SDP_AngleM			\
-								SDP_Beam00_RA 			\
-								SDP_Beam00_DEC			\
-								SDP_Beam01_RA 			\
-								SDP_Beam01_DEC			\
-								SDP_Beam02_RA 			\
-								SDP_Beam02_DEC			\
-								SDP_Beam03_RA 			\
-								SDP_Beam03_DEC			\
-								SDP_Beam04_RA 			\
-								SDP_Beam04_DEC			\
-								SDP_Beam05_RA 			\
-								SDP_Beam05_DEC			\
-								SDP_Beam06_RA 			\
-								SDP_Beam06_DEC			\
-								SDP_Beam07_RA 			\
-								SDP_Beam07_DEC			\
-								SDP_Beam08_RA 			\
-								SDP_Beam08_DEC			\
-								SDP_Beam09_RA 			\
-								SDP_Beam09_DEC			\
-								SDP_Bea10m_RA 			\
-								SDP_Bea10m_DEC			\
-								SDP_Beam11_RA 			\
-								SDP_Beam11_DEC			\
-								SDP_Beam12_RA 			\
-								SDP_Beam12_DEC			\
-								SDP_Beam13_RA 			\
-								SDP_Beam13_DEC			\
-								SDP_Beam14_RA 			\
-								SDP_Beam14_DEC			\
-								SDP_Beam15_RA 			\
-								SDP_Beam15_DEC			\
-								SDP_Beam16_RA 			\
-								SDP_Beam16_DEC			\
-								SDP_Beam17_RA 			\
-								SDP_Beam17_DEC			\
-								SDP_Beam18_RA 			\
-								SDP_Beam18_DEC			\
-				 ");
-#endif
 	if(!rv) {
-		//faststatus->TIME      = time_t(atof(reply->element[0]->str)/1000);	// TODO observatory gives us millisecs - need to acct for this
-		faststatus->TIME      = time_t(floor(atof(reply->element[0]->str)/1000));	// TODO observatory gives us millisecs - need to acct for this
-		faststatus->TIMEFRAC  = double(atol(reply->element[0]->str)%1000)/1000.0;	// TODO observatory gives us millisecs - need to acct for this
+		 // observatory gives us millisecs - we record as seconds and fractional seconds
+		faststatus->TIME      = time_t(floor(atof(reply->element[0]->str)/1000));
+		faststatus->TIMEFRAC  = double(atol(reply->element[0]->str)%1000)/1000.0;
 		strncpy(faststatus->RECEIVER, reply->element[1]->str, FASTSTATUS_STRING_SIZE);
 		int i;
 		for(i=0; i < sizeof(faststatus->RECEIVER); i++) 
@@ -358,8 +251,8 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 		for(RAi=6, DECi=7, beam=0; beam<19; RAi += 2, DECi += 2, beam++) {
 			faststatus->POINTRA[beam]   = atof(reply->element[RAi]->str);
 			faststatus->POINTDEC[beam]  = atof(reply->element[DECi]->str);
-fprintf(stderr, "beam %d i %d ra %f\n", beam, RAi, atof(reply->element[RAi]->str));
-	}
+//fprintf(stderr, "beam %d i %d ra %f\n", beam, RAi, atof(reply->element[RAi]->str));
+		}
 	}
    
     if(c) redisFree(c);       // TODO do I really want to free each time?
