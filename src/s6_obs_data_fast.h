@@ -18,41 +18,29 @@
 
 typedef struct faststatus {
 
-    time_t   TIME;		// unix time, seconds
-    double   TIMEFRAC;		// fractional seconds beyond TIME
+   time_t   TIME;		// unix time, seconds
+   double   TIMEFRAC;		// fractional seconds beyond TIME
 
-    char     RECEIVER[FASTSTATUS_STRING_SIZE];  
+   char     RECEIVER[FASTSTATUS_STRING_SIZE];  
 
-    double	PHAPOSX;
-    double	PHAPOSY;
-    double	PHAPOSZ;
-    double	ANGLEM;
+   double   PHAPOSX;
+   double   PHAPOSY;
+   double   PHAPOSZ;
+   double   ANGLEM;
 
    double   POINTRA[19]; 
    double   POINTDEC[19];
 
-   int      CLOCKTIM;                           // clock synth
    double   CLOCKFRQ;
-   double   CLOCKDBM;
-   int      CLOCKLOC;
 
-   int      BIRDITIM;                           // IF birdie synth
-   double   BIRDIFRQ;
-   double   BIRDIDBM;
-   int      BIRDILOC;
-
-   int		ADCRMSTM;							// ADC RMS's 
-   double	ADCRMSP0;							// polarization 0
-   double	ADCRMSP1;							// polarization 1
+   int	    ADCRMSTM;							// ADC RMS's 
+   double   ADCRMSP0;							// polarization 0
+   double   ADCRMSP1;							// polarization 1
 
    int      DUMPTIME;
    int      DUMPVOLT;
 
-   double   ZKDTIME;						   // ZK_KY_DATA Timestamp : seconds.fraction past the unix epoch
-   double   EQTRA;							   // ZK_COORDINATE Equator_T_RA
-   double   EQDDEC;							   // ZK_COORDINATE Equator_D_DEC
-
-  int     coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
+   int       coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
 
 int get_obs_fast_info_from_redis(faststatus_t *faststatus, char *hostname, int port);

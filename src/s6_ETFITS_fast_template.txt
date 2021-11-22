@@ -57,27 +57,16 @@ EXTNAME = 'FASTSTATUS'           / name of this binary table extension
 NMATRIX =                    1  / 1 dataset per row
 #
 COARCHID=                    *  / coarse channel ID
-#
-TIMETIM=                     * /                           
-TIME=                        * /
-#
-RECTIM=                      * /                            
-RECEIVER=                    * /
-#
-POINTTIM=                    * /                           
-POINTRA=                     * / 
-POINTDEC=                    * /		
-#
-### Sample clock synth fields ###
-CLOCKTIM=                    *  / unix time of this clock data (TINT)  
 CLOCKFRQ=                    *  / clock frequency - the sample rate of the instrument (TDOUBLE)
-CLOCKDBM=                    *  / clock power level in dBm (TDOUBLE)
-CLOCKLOC=                    *  / 1 = synth is locked, 0 = synth is not locked (TINT)
-### Birdie frequency synth fields ###
-BIRDITIM=                    *  / unix time of this birdie data (TINT)  
-BIRDIFRQ=                    *  / birdie frequency (TDOUBLE)
-BIRDIDBM=                    *  / birdie power level in dBm (TDOUBLE)
-BIRDILOC=                    *  / 1 = synth is locked, 0 = synth is not locked (TINT)
+TIME    =                    *  / unix time, seconds
+TIMEFRAC=                    *  / fractional seconds beyond TIME
+
+RECEIVER=                    *		
+
+PHAPOSX =                    *
+PHAPOSY =                    *
+PHAPOSZ =                    *
+ANGLEM  =                    *
 ### ADC RMS Values ###
 # Not yet implemented
 #
