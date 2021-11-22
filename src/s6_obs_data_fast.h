@@ -16,21 +16,20 @@
 #define idle_nibble_01_4bit                     0x000000000000004;
 #define idle_nibble_01_8bit                     0x000000000000008;
 
-
-
 typedef struct faststatus {
 
-// TODO - use time_t?
-   long     TIMETIM;                            // unix time
-   //long     TIME;
-   double   TIME;
+    time_t   TIME;		// unix time, seconds
+    double   TIMEFRAC;		// fractional seconds beyond TIME
 
-   long     RECTIM;                             // receiver
-   char     RECEIVER[FASTSTATUS_STRING_SIZE];  
+    char     RECEIVER[FASTSTATUS_STRING_SIZE];  
 
-   long     POINTTIM;                           // telescope pointing 
-   double   POINTRA; 
-   double   POINTDEC;
+    double	PHAPOSX;
+    double	PHAPOSY;
+    double	PHAPOSZ;
+    double	ANGLEM;
+
+   double   POINTRA[19]; 
+   double   POINTDEC[19];
 
    int      CLOCKTIM;                           // clock synth
    double   CLOCKFRQ;

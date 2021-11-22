@@ -276,9 +276,10 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
         etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
         //etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
-        etf->hits_hdr[i].ra      = faststatus_p->POINTRA;
-        etf->hits_hdr[i].dec     = faststatus_p->POINTDEC;
+        etf->hits_hdr[i].ra      = faststatus_p->POINTRA[etf->primary_hdr.beam];
+        etf->hits_hdr[i].dec     = faststatus_p->POINTDEC[etf->primary_hdr.beam];
         etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
+fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
     }
 
     if(! *status_p) write_integration_header_fast(etf, faststatus_p);
@@ -605,9 +606,18 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",  (char *)"FASTSTATUS",  NULL, status_p); 
 
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",     &faststatus_p->TIME,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIMEFRAC", &faststatus_p->TIMEFRAC,   NULL, status_p); 
+
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &faststatus_p->coarse_chan_id,   NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RECEIVER", &(faststatus_p->RECEIVER), NULL, status_p); 
 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSX", &(faststatus_p->PHAPOSX), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSY", &(faststatus_p->PHAPOSY), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSZ", &(faststatus_p->PHAPOSZ), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ANGLEM", &(faststatus_p->ANGLEM), NULL, status_p);
+
+#if 0
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "CLOCKTIM", &(faststatus_p->CLOCKTIM), NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKFRQ", &(faststatus_p->CLOCKFRQ), NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "CLOCKDBM", &(faststatus_p->CLOCKDBM), NULL, status_p);
@@ -628,11 +638,7 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
 
     // observatory data 
     //if(! *status_p) fits_update_key(etf->fptr, TINT,    "SOMEFIELD",  &(faststatus->SOMEFIELD), NULL, status_p); 
-
-
-
-
-
+#endif
 
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");
@@ -885,6 +891,7 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
             int borspol = bors * N_POLS_PER_BEAM + input;
             int hit_j=0;
             nhits_this_input=0;
+fprintf(stderr, "input %d bors %d borspol %d\n", input, bors, borspol);
             for(int hit_i=0; hit_i < (size_t)db->block[block_idx].header.nhits[bors]; hit_i++) {
 #ifdef SOURCE_FAST
 		if(input == 0) {	// only 1 input for FAST but pol could be >= 0
