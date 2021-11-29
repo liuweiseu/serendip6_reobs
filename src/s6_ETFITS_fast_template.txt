@@ -95,7 +95,7 @@ NMATRIX =                    1 / 1 dataset per row
 TIME    =                    * / unix time (incl fractional sec) of this integration (TDOUBLE)
 RA      =                    * / derived from corrected scram azza (TDOUBLE)
 DEC     =                    * / derived from corrected scram azza (TDOUBLE)
-BORSPOL =                    * / 0-13 beam/pols or 0-15 spectra/pols  (TINT)
+BORSPOL =                    * / 0-37 beam/pols (TINT)
 NHITS   =                    * / (TINT)
 MISSEDPK=                    * / missed packets this beam/pol this integration (TINT)
 #

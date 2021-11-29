@@ -359,7 +359,7 @@ int etfits_create(etfits_t * etf) {
 #endif
             etf->primary_hdr.receiver,
 #ifdef SOURCE_FAST
-	    etf->primary_hdr.beam,
+	    etf->primary_hdr.beam + 1,
 	    etf->primary_hdr.pol,
 #else
             etf->file_chan,
