@@ -83,8 +83,8 @@
 #define N_INPUT_BLOCKS          24
 #define N_DEBUG_INPUT_BLOCKS    0
 #define N_OUTPUT_BLOCKS         3
-// for FAST, the clock frequency is hard set to 1GHz
-#define CLOCK_FREQ		1000000000.0
+// for FAST, the clock frequency is hard set to 1GHz, expressed here in MHz
+#define CLOCK_FREQ		1000.0
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
