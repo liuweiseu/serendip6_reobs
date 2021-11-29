@@ -239,10 +239,19 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 		faststatus->TIME      = time_t(floor(atof(reply->element[0]->str)/1000));
 		faststatus->TIMEFRAC  = double(atol(reply->element[0]->str)%1000)/1000.0;
 		faststatus->DUT1      = atof(reply->element[1]->str);
-		strncpy(faststatus->RECEIVER, reply->element[2]->str, FASTSTATUS_STRING_SIZE);
-		int i;
-		for(i=0; i < sizeof(faststatus->RECEIVER); i++) 
-			if(faststatus->RECEIVER[i] == '(' || faststatus->RECEIVER[i] == ')') faststatus->RECEIVER[i] = '_';
+
+		char receiver[FASTSTATUS_STRING_SIZE];
+		strncpy(receiver, reply->element[2]->str, FASTSTATUS_STRING_SIZE);
+		// strip out any parentheses from receiver name
+		int i, j, receiver_name_length;
+		receiver_name_length = strlen(receiver);
+		for(i=0, j=0; i < receiver_name_length; i++, j++) { 
+			if(receiver[i] == '(') faststatus->RECEIVER[j] = '_'; 	// replace open paren with _
+			else if(receiver[i] == ')') j--;			// replace close paren with nothing
+			else faststatus->RECEIVER[j] = receiver[i];		// copy non-paren as is
+		}
+		faststatus->RECEIVER[j] = '\0';	
+
 		faststatus->PHAPOSX   = atof(reply->element[3]->str);
 		faststatus->PHAPOSY   = atof(reply->element[4]->str);
 		faststatus->PHAPOSZ   = atof(reply->element[5]->str);
