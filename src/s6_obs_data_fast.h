@@ -20,6 +20,7 @@ typedef struct faststatus {
 
    time_t   TIME;		// unix time, seconds
    double   TIMEFRAC;		// fractional seconds beyond TIME
+   double   DUT1;		// current UT1 - UTC difference that is being broadcast by NIST
 
    char     RECEIVER[FASTSTATUS_STRING_SIZE];  
 

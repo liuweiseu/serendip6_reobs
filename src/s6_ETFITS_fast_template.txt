@@ -60,6 +60,7 @@ COARCHID=                    *  / coarse channel ID
 CLOCKFRQ=                    *  / clock frequency - the sample rate of the instrument (TDOUBLE)
 TIME    =                    *  / unix time, seconds
 TIMEFRAC=                    *  / fractional seconds beyond TIME
+DUT1=                        *  / current UT1 - UTC difference that is being broadcast by NIST
 
 RECEIVER=                    *		
 

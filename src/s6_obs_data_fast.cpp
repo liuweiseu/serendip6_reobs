@@ -233,22 +233,23 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 	// Get observatory data
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget KY_ZK_RUN_DATA_RESULT_HASH TimeStamp Receiver SDP_PhaPos_X SDP_PhaPos_Y SDP_PhaPos_Z SDP_AngleM SDP_Beam00_RA SDP_Beam00_DEC SDP_Beam01_RA SDP_Beam01_DEC SDP_Beam02_RA SDP_Beam02_DEC SDP_Beam03_RA SDP_Beam03_DEC SDP_Beam04_RA SDP_Beam04_DEC SDP_Beam05_RA SDP_Beam05_DEC SDP_Beam06_RA SDP_Beam06_DEC SDP_Beam07_RA SDP_Beam07_DEC SDP_Beam08_RA SDP_Beam08_DEC SDP_Beam09_RA SDP_Beam09_DEC SDP_Beam10_RA SDP_Beam10_DEC SDP_Beam11_RA SDP_Beam11_DEC SDP_Beam12_RA SDP_Beam12_DEC SDP_Beam13_RA SDP_Beam13_DEC SDP_Beam14_RA SDP_Beam14_DEC SDP_Beam15_RA SDP_Beam15_DEC SDP_Beam16_RA SDP_Beam16_DEC SDP_Beam17_RA SDP_Beam17_DEC SDP_Beam18_RA SDP_Beam18_DEC");
+	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget KY_ZK_RUN_DATA_RESULT_HASH TimeStamp DUT1 Receiver SDP_PhaPos_X SDP_PhaPos_Y SDP_PhaPos_Z SDP_AngleM SDP_Beam00_RA SDP_Beam00_DEC SDP_Beam01_RA SDP_Beam01_DEC SDP_Beam02_RA SDP_Beam02_DEC SDP_Beam03_RA SDP_Beam03_DEC SDP_Beam04_RA SDP_Beam04_DEC SDP_Beam05_RA SDP_Beam05_DEC SDP_Beam06_RA SDP_Beam06_DEC SDP_Beam07_RA SDP_Beam07_DEC SDP_Beam08_RA SDP_Beam08_DEC SDP_Beam09_RA SDP_Beam09_DEC SDP_Beam10_RA SDP_Beam10_DEC SDP_Beam11_RA SDP_Beam11_DEC SDP_Beam12_RA SDP_Beam12_DEC SDP_Beam13_RA SDP_Beam13_DEC SDP_Beam14_RA SDP_Beam14_DEC SDP_Beam15_RA SDP_Beam15_DEC SDP_Beam16_RA SDP_Beam16_DEC SDP_Beam17_RA SDP_Beam17_DEC SDP_Beam18_RA SDP_Beam18_DEC");
 	if(!rv) {
 		 // observatory gives us millisecs - we record as seconds and fractional seconds
 		faststatus->TIME      = time_t(floor(atof(reply->element[0]->str)/1000));
 		faststatus->TIMEFRAC  = double(atol(reply->element[0]->str)%1000)/1000.0;
-		strncpy(faststatus->RECEIVER, reply->element[1]->str, FASTSTATUS_STRING_SIZE);
+		faststatus->DUT1      = atof(reply->element[1]->str);
+		strncpy(faststatus->RECEIVER, reply->element[2]->str, FASTSTATUS_STRING_SIZE);
 		int i;
 		for(i=0; i < sizeof(faststatus->RECEIVER); i++) 
 			if(faststatus->RECEIVER[i] == '(' || faststatus->RECEIVER[i] == ')') faststatus->RECEIVER[i] = '_';
-		faststatus->PHAPOSX   = atof(reply->element[2]->str);
-		faststatus->PHAPOSY   = atof(reply->element[3]->str);
-		faststatus->PHAPOSZ   = atof(reply->element[4]->str);
-		faststatus->ANGLEM    = atof(reply->element[5]->str);
+		faststatus->PHAPOSX   = atof(reply->element[3]->str);
+		faststatus->PHAPOSY   = atof(reply->element[4]->str);
+		faststatus->PHAPOSZ   = atof(reply->element[5]->str);
+		faststatus->ANGLEM    = atof(reply->element[6]->str);
 		// so that we do not have to deal with 38 names!
 		int RAi, DECi, beam; 
-		for(RAi=6, DECi=7, beam=0; beam<19; RAi += 2, DECi += 2, beam++) {
+		for(RAi=7, DECi=8, beam=0; beam<19; RAi += 2, DECi += 2, beam++) {
 			faststatus->POINTRA[beam]   = atof(reply->element[RAi]->str);
 			faststatus->POINTDEC[beam]  = atof(reply->element[DECi]->str);
 //fprintf(stderr, "beam %d i %d ra %f\n", beam, RAi, atof(reply->element[RAi]->str));
