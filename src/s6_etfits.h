@@ -81,7 +81,7 @@ typedef struct etfits {
     etfits_hits_header_t        hits_hdr[N_BORS*N_POLS_PER_BEAM];       // one hits HDU per beam/pol per integration
     etfits_hits_t               hits;
 } etfits_t;
-
+/* comment out by Wei
 int init_etfits(etfits_t *etf);
 int check_for_file_roll(etfits_t *etf);
 int write_etfits(s6_output_databuf_t      *db, int block_idx, etfits_t *etf, scram_t      *scram_p);
@@ -97,5 +97,5 @@ int write_ccpwrs_header(etfits_t *etf);
 int write_ccpwrs(s6_output_databuf_t *db, int block_idx, etfits_t *etf);
 int write_hits_header(etfits_t *etf, size_t nhits);
 int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf);
-
+*/
 #endif  // _ETFITS_H

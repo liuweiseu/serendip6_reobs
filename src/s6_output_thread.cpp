@@ -9,24 +9,33 @@
 #include <pthread.h>
 #include <hiredis/hiredis.h>
 
+/*
 #include <cuda.h>
 #include <cufft.h>
 #include <s6GPU.h>
-
+*/
 #include <sched.h>
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
+#include "s6_obs_data_fast.h"
+
+#include "s6_etfits.h"
+/*
 #include "s6_obs_data.h"
 #include "s6_obs_data_gbt.h"
 #include "s6_obs_data_fast.h"
 #include "s6_etfits.h"
 #include "s6_redis.h"
-
+*/
 #define SET_BIT(val, bitIndex) val |= (1 << bitIndex)
 #define CLEAR_BIT(val, bitIndex) val &= ~(1 << bitIndex)
 #define BIT_IS_SET(val, bitIndex) (val & (1 << bitIndex))
 
+static int write_to_file(s6_output_databuf_t *db, int block_idx)
+{
+    
+}
 static int init(hashpipe_thread_args_t *args)
 {
     hashpipe_status_t st = args->st;
@@ -71,7 +80,8 @@ static void *run(hashpipe_thread_args_t * args)
 
     int idle=0;                                         // 1 = idle output, 0 = good to go
     uint32_t idle_flag=0;                               // bit field for data driven idle conditions    
-    int testmode=0;                                     // 1 = write output file regardless of other
+    int testmode=1;                                     // modified by Wei on 12/30/2021. Let's make it work on testmode
+                                                        // 1 = write output file regardless of other
                                                         //   flags and do not attempt to obtain observatory
                                                         //   status data (in fact, write zeros to the obs
                                                         //   status structure).  0 = operate normally and
@@ -105,7 +115,7 @@ static void *run(hashpipe_thread_args_t * args)
 
     char current_filename[200] = "\0";  // init as a null string
 
-    init_etfits(&etf);                  // init for ETFITS output 
+    //init_etfits(&etf);                  // init for ETFITS output 
 
 	time_start = time(NULL);
 
@@ -159,7 +169,7 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_DIBAS
             rv = get_obs_gbt_info_from_redis(gbtstatus_p,   (char *)REDISHOST, 6379);
 #elif SOURCE_FAST
-            rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
+            //rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379); //comment out by Wei
             hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  // raw data dump request status
 #endif
         } else {
@@ -300,7 +310,7 @@ static void *run(hashpipe_thread_args_t * args)
 #endif
 
                 if(etf.file_open) {
-                    etfits_close(&etf);     
+                    //etfits_close(&etf); //comment out by Wei     
                 }
                 etf.new_file = 1; 
                 // re-init
@@ -335,7 +345,9 @@ static void *run(hashpipe_thread_args_t * args)
             rv = write_etfits_gbt(db, block_idx, &etf, gbtstatus_p);
 #elif SOURCE_FAST
             etf.file_chan = 0;                                  // constant - FAST data not coarse channelized
-            rv = write_etfits_fast(db, block_idx, &etf, faststatus_p);
+            //rv = write_etfits_fast(db, block_idx, &etf, faststatus_p); // modified by Wei. We don't need fits file for now.
+
+            etf.file_num ++; // added by Wei on 12/30/2021. It's for testing
 #endif
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_etfits()");
@@ -425,9 +437,12 @@ static void *run(hashpipe_thread_args_t * args)
     }
 
     // Thread success!
+    // modified by Wei. We don't need fits file here
+    /*
     if(etf.file_open) {
         etfits_close(&etf);     // final close
-    }
+        
+    }*/
     return NULL;
 }
 

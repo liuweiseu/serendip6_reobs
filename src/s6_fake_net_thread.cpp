@@ -37,7 +37,7 @@ static void *run(hashpipe_thread_args_t * args)
     int block_idx = 0;
     int error_count = 0, max_error_count = 0;
     float error, max_error = 0.0;
-    int gen_fake = 0;		// set this to 1 to turn on fake data generation
+    int gen_fake = 1;		// set this to 1 to turn on fake data generation
                             //  Once data have been generated of an input
                             //  ring buffer, no need to regenerate until
                             //  buffers are removed.
@@ -49,7 +49,7 @@ static void *run(hashpipe_thread_args_t * args)
     hputi4(st.buf, "NUMBBEAM", N_BYTES_PER_BEAM);
     hputi4(st.buf, "NUMBBLOC", sizeof(s6_input_block_t));
     hputi4(st.buf, "THRESHLD", POWER_THRESH);
-    hgeti4(st.buf, "GENFAKE", &gen_fake);
+    //hgeti4(st.buf, "GENFAKE", &gen_fake);
     hashpipe_status_unlock_safe(&st);
     //hashpipe_status_unlock_safe(p_st);
 
@@ -104,7 +104,7 @@ static void *run(hashpipe_thread_args_t * args)
         memset(db->block[block_idx].header.missed_pkts, 0, sizeof(uint64_t) * N_BEAM_SLOTS);
 
         if(gen_fake) {
-            gen_fake = 0;
+            //gen_fake = 0;
             // All blocks will contain same fake data.
             // TODO vary data by beam
 #define SLOW_GEN
@@ -139,6 +139,9 @@ static void *run(hashpipe_thread_args_t * args)
 
         // Setup for next block
         block_idx = (block_idx + 1) % db->header.n_block;
+        hashpipe_status_lock_safe(&st);
+        hputi4(st.buf, "NET_BLKIN", block_idx);
+        hashpipe_status_unlock_safe(&st);
         mcnt++;
         // uncomment the following to test dynamic setting of num_coarse_chan
         //num_coarse_chan--;

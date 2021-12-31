@@ -16,18 +16,20 @@
 #include <semaphore.h>
 #include <sched.h>
 
+/*
 #include <cuda.h>
 #include <cufft.h>
 #include <cuda_runtime_api.h>
 
 #include <s6GPU.h>
+*/
 #include "hashpipe.h"
 #include "s6_databuf.h"
-#include "s6GPU.h"
+//#include "s6GPU.h"
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
-
+/*
 int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initial) {
 
     extern cufft_config_t cufft_config;
@@ -75,7 +77,7 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
 
     return 0;
 }
-
+*/
 static void *run(hashpipe_thread_args_t * args)
 {
     // Local aliases to shorten access to args fields
@@ -122,23 +124,25 @@ static void *run(hashpipe_thread_args_t * args)
     hgetr4(st.buf, "POWTHRSH", &power_thresh);
     hputr4(st.buf, "POWTHRSH", power_thresh);
     hashpipe_status_unlock_safe(&st);
-    init_device(gpu_dev);
+    //init_device(gpu_dev);
 	char gpu_sem_name[256];
 	sem_t * gpu_sem;
 	sprintf(gpu_sem_name, "serendip6_gpu_sem_device_%d", gpu_dev);
 	gpu_sem = sem_open(gpu_sem_name, O_CREAT, S_IRWXU, 1);
 	
     
+    /* comment out by Wei
     // pin the databufs from cudu's point of view
     cudaHostRegister((void *) db_in, sizeof(s6_input_databuf_t), cudaHostRegisterPortable);
     cudaHostRegister((void *) db_out, sizeof(s6_output_databuf_t), cudaHostRegisterPortable);
 
     cufftHandle fft_plan;
     cufftHandle *fft_plan_p = &fft_plan;
-
+    */
     uint64_t num_coarse_chan = N_COARSE_CHAN;
+    /* comment out by Wei
     init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, fft_plan_p, 1);
-
+    */
     //hashpipe_status_lock_safe(&st);
     //hputr4(st.buf, "POWTHRSH", POWER_THRESH);
     //hashpipe_status_unlock_safe(&st);
@@ -210,6 +214,7 @@ static void *run(hashpipe_thread_args_t * args)
         memcpy(&db_out->block[curblock_out].header.missed_pkts, 
                &db_in->block[curblock_in].header.missed_pkts, 
                sizeof(uint64_t) * N_BEAM_SLOTS);
+
 #ifdef SOURCE_FAST
 	db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 #endif
@@ -241,7 +246,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         db_in->block[curblock_in].header.sid % 2, num_coarse_chan, n_bytes_per_bors, 
         &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
 #endif
-
+/*
 #ifdef SOURCE_FAST
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
                                      N_FINE_CHAN,                                   // n_fc    
@@ -271,7 +276,17 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      &db_out->block[curblock_out],                  // s6_output_block
                                      gpu_sem);                                      // semaphore to serialize GPU access
 #endif
-
+*/
+#ifdef SOURCE_FAST
+    // added by wei on 12/30/2021
+    // In Jeff's code, the data will be moved to GPU for data processing
+    // In my code, I'm going to move the data to output buffer directly
+    memcpy(&db_out->block[curblock_out].data,
+           &db_in->block[curblock_in].data,
+           N_DATA_BYTES_PER_BLOCK/sizeof(uint64_t));  
+#else
+    printf("It's not for FAST, I don't care about it for now. \r\n");
+#endif
 //fprintf(stderr, "spectroscopy() returned %ld for beam %d\n", nhits, beam_i);
                 total_hits += nhits;
                 clock_gettime(CLOCK_MONOTONIC, &stop);
@@ -300,12 +315,13 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         /* Check for cancel */
         pthread_testcancel();
     }
-
+    /*
     // Thread success!
     gpu_fini();		// take care of any gpu cleanup, eg profiler flushing
     // unpin the databufs from cudu's point of view
     cudaHostUnregister((void *) db_in);
     cudaHostUnregister((void *) db_out);
+    */
 	sem_unlink(gpu_sem_name);
     return NULL;
 }
