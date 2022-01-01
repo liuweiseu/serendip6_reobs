@@ -283,7 +283,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
     // In my code, I'm going to move the data to output buffer directly
     memcpy(&db_out->block[curblock_out].data,
            &db_in->block[curblock_in].data,
-           N_DATA_BYTES_PER_BLOCK/sizeof(uint64_t));  
+           N_DATA_BYTES_PER_BLOCK);  
 #else
     printf("It's not for FAST, I don't care about it for now. \r\n");
 #endif

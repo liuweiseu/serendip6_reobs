@@ -133,6 +133,7 @@ void gen_time_series(int input_i, std::vector<char2> &h_raw_timeseries) {
 
 #endif
 
+/*
 // -----------------------------------------------------------------------------
 void gen_fake_data(uint64_t *data) {
 // data points to the input buffer
@@ -172,4 +173,10 @@ void gen_fake_data(uint64_t *data) {
             }
         }
     }
+}
+*/
+void gen_fake_data(uint64_t *data) {
+    int i = 0;
+    for(i=0;i<256;i++)
+        *(((unsigned char*)data)+i) = i;
 }
