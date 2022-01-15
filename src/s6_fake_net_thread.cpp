@@ -111,6 +111,7 @@ static void *run(hashpipe_thread_args_t * args)
 #ifdef SLOW_GEN 
             // Slow : gen fake data (with signals) for all beams, all blocks   
             fprintf(stderr, "slowly generating fake data (sine waves) to block 0 beam 0...\n");
+            //gen_fake_data(&(db->block[0].data[0])); //modified by Wei
             gen_fake_data(&(db->block[0].data[0]));
 #else
 			// Fast : quick and dirty data gen - saw tooth
@@ -122,9 +123,8 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "done generating fake data to block 0 beam 0\n");
             for(int block_i = 1; block_i < N_INPUT_BLOCKS; block_i++) {
                 fprintf(stderr, "copying fake data to block %d\n", block_i);
-                memcpy((void *)&db->block[block_i].data[0], 
-                    (void *)&db->block[0].data[0], 
-                    N_DATA_BYTES_PER_BLOCK);
+                //memcpy((void *)&db->block[block_i].data[0], (void *)&db->block[0].data[0], N_DATA_BYTES_PER_BLOCK); //modified by Wei
+                memcpy((void *)&db->block[block_i].data, (void *)&db->block[0].data, N_DATA_BYTES_PER_BLOCK);
             }
         }
 

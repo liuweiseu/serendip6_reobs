@@ -35,27 +35,14 @@ tags:
 clean: ; rm -f $(S6_FAST_LIB_TARGET)  tags
 
 prefix=/usr/local
-ETCDIR=$(prefix)/etc
 LIBDIR=$(prefix)/lib
-BINDIR=$(prefix)/bin
 
-install-etc: obsPosition.dat utcToUt1.dat s6_ETFITS_template.txt
-	mkdir -p "$(DESTDIR)$(ETCDIR)"
-	install -p $^ "$(DESTDIR)$(ETCDIR)"
 
 install-lib:  $(S6_FAST_LIB_TARGET)
 	mkdir -p "$(DESTDIR)$(LIBDIR)"
 	install -p $^ "$(DESTDIR)$(LIBDIR)"
 
-install-bin: $(S6OBS_PROG_TARGET) 
-	mkdir -p "$(DESTDIR)$(BINDIR)"
-	install -p $^ "$(DESTDIR)$(BINDIR)"
+install: install-lib 
 
-install-script: $(S6_SCRIPT_TARGET) 
-	mkdir -p "$(DESTDIR)$(BINDIR)"
-	install -p $^ "$(DESTDIR)$(BINDIR)"
-
-install: install-etc install-lib install-bin install-script
-
-.PHONY: all tags clean install install-lib install-etc install-bin
+.PHONY: all tags clean install install-lib
 # vi: set ts=8 noet :
