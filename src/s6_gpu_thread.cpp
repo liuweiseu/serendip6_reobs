@@ -29,57 +29,10 @@
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
-/*
-int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initial) {
 
-    extern cufft_config_t cufft_config;
-
-    struct timespec start, stop;
-    
-    const char * re[2] = {"re", ""};
-
-    if(num_coarse_chan == 0) {  
-        hashpipe_error(__FUNCTION__, "Cannot configure cuFFT with 0 coarse channels");
-        return -1;
-    }
-
-    fprintf(stderr, "%sconfiguring cuFFT for %ld coarse channels...\n", initial ? re[1] : re[0], num_coarse_chan);
-
-    // Configure cuFFT...
-    // The maximum number of coarse channels is one determining factor 
-    // of input data buffer size and is set at compile time. At run time 
-    // the number of coarse channels can change but this does not affect 
-    // the size of the input data buffer.  
-    cufft_config.nfft_     = N_TIME_SAMPLES;                                
-    cufft_config.ostride   = 1;                                
-    cufft_config.idist     = 1;                                
-    cufft_config.odist     = cufft_config.nfft_;                        
-#ifdef SOURCE_FAST
-	fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
-	cufft_config.fft_type = CUFFT_R2C;								
-    cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
-    cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
-#else
-	fprintf(stderr, "configuring cuFFT for complex to complex transforms (cufftType %d)\n", cufft_config.fft_type);
-	cufft_config.fft_type = CUFFT_C2C;													
-    cufft_config.nbatch    = (num_coarse_chan*N_POLS_PER_BEAM);                             // only FFT the utilized chans   
-    cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM;   // must stride over all (max) chans
-#endif
-
-
-    //get_gpu_mem_info("right before creating fft plan");
-    //clock_gettime(CLOCK_MONOTONIC, &stop);
-    //create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, cufft_config.nbatch, cufft_config.fft_type);
-    //clock_gettime(CLOCK_MONOTONIC, &stop);
-    //get_gpu_mem_info("right after creating fft plan");
-
-    //fprintf(stderr, "...done (in %lu nanosec) : nfft : %lu nbatch : %lu istride : %d \n", cufft_config.nfft_, cufft_config.nbatch, cufft_config.istride, ELAPSED_NS(start, stop));
-
-    return 0;
-}
-*/
 static void *run(hashpipe_thread_args_t * args)
 {
+    printf("gpu_thread_V0.1\r\n");
     // Local aliases to shorten access to args fields
     s6_input_databuf_t *db_in = (s6_input_databuf_t *)args->ibuf;
     s6_output_databuf_t *db_out = (s6_output_databuf_t *)args->obuf;
@@ -102,18 +55,6 @@ static void *run(hashpipe_thread_args_t * args)
     uint64_t elapsed_gpu_ns  = 0;
     uint64_t gpu_block_count = 0;
 
-#if 0
-    // raise this thread to maximum scheduling priority
-    struct sched_param SchedParam;
-    int retval;
-    SchedParam.sched_priority = sched_get_priority_max(SCHED_FIFO);
-    fprintf(stderr, "Setting scheduling priority to %d\n", SchedParam.sched_priority);
-    retval = sched_setscheduler(0, SCHED_FIFO, &SchedParam);
-    if(retval) {
-        perror("sched_setscheduler :");
-    }
-#endif
-
     // init s6GPU
     int gpu_dev=0;          			// default to 0
     int maxhits = MAXHITS; 				// default
@@ -131,21 +72,7 @@ static void *run(hashpipe_thread_args_t * args)
 	gpu_sem = sem_open(gpu_sem_name, O_CREAT, S_IRWXU, 1);
 	
     
-    /* comment out by Wei
-    // pin the databufs from cudu's point of view
-    cudaHostRegister((void *) db_in, sizeof(s6_input_databuf_t), cudaHostRegisterPortable);
-    cudaHostRegister((void *) db_out, sizeof(s6_output_databuf_t), cudaHostRegisterPortable);
-
-    cufftHandle fft_plan;
-    cufftHandle *fft_plan_p = &fft_plan;
-    */
     uint64_t num_coarse_chan = N_COARSE_CHAN;
-    /* comment out by Wei
-    init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, fft_plan_p, 1);
-    */
-    //hashpipe_status_lock_safe(&st);
-    //hputr4(st.buf, "POWTHRSH", POWER_THRESH);
-    //hashpipe_status_unlock_safe(&st);
 
     while (run_threads()) {
 
@@ -173,14 +100,6 @@ static void *run(hashpipe_thread_args_t * args)
         hashpipe_status_lock_safe(&st);
         hputu8(st.buf, "GPUMCNT", db_in->block[curblock_in].header.mcnt);
         hashpipe_status_unlock_safe(&st);
-
-#ifdef SOURCE_S6
-        if(db_in->block[curblock_in].header.num_coarse_chan != num_coarse_chan) {
-            // number of coarse channels has changed!  Redo GPU memory / FFT plan
-            num_coarse_chan = db_in->block[curblock_in].header.num_coarse_chan;
-            init_gpu_memory(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM, fft_plan_p, 0);
-        }
-#endif
 
         if(db_in->block[curblock_in].header.mcnt >= last_mcount) {
           // Wait for new output block to be free
@@ -215,86 +134,23 @@ static void *run(hashpipe_thread_args_t * args)
                &db_in->block[curblock_in].header.missed_pkts, 
                sizeof(uint64_t) * N_BEAM_SLOTS);
 
-#ifdef SOURCE_FAST
-	db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
-#endif
+        db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 
-        // only do spectroscopy if there are more than zero channels!
         size_t total_hits = 0;
         if(num_coarse_chan) {
-            // do spectroscopy and hit detection on this block.
-            // spectroscopy() writes directly to the output buffer.
-#ifdef SOURCE_S6
-            // At AO, data are grouped by beam
-            int n_bors = N_BEAMS;
-            uint64_t n_bytes_per_bors  = N_BYTES_PER_BEAM;
-#elif SOURCE_DIBAS
-            // At GBT, data are grouped by subspectra
-            int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
-            uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_FINE_CHAN;
-#elif SOURCE_FAST
-            // At FAST, data are not grouped
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
-#endif
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {
                 size_t nhits = 0; 
-                // TODO there is no real c error checking in spectroscopy()
-                //      Errors are handled via c++ exceptions
-#if 0
-fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bors addr = %p\n", 
-        db_in->block[curblock_in].header.sid % 2, num_coarse_chan, n_bytes_per_bors, 
-        &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
-#endif
-/*
-#ifdef SOURCE_FAST
-                nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
-                                     N_FINE_CHAN,                                   // n_fc    
-                                     N_TIME_SAMPLES,                                // n_ts
-                                     db_in->block[curblock_in].header.sid % 2,      // n_pol, the pol itself, one per data strem
-                                     bors_i,                                        // bors         
-                                     maxhits,                                       // maxhits
-                                     MAXGPUHITS,                                    // maxgpuhits
-                                     power_thresh,                                  // power_thresh
-                                     SMOOTH_SCALE,                                  // smooth_scale
-                                     &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
-                                     n_bytes_per_bors,                              // input_data_bytes                         /2
-                                     &db_out->block[curblock_out],                  // s6_output_block
-                                     gpu_sem);                                      // semaphore to serialize GPU access
-#else
-                nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc   
-                                     N_FINE_CHAN,                                   // n_fc     
-                                     N_TIME_SAMPLES,                                // n_ts     
-                                     N_POLS_PER_BEAM,                               // n_pol     
-                                     bors_i,                                        // bors         
-                                     maxhits,                                       // maxhits
-                                     MAXGPUHITS,                                    // maxgpuhits
-                                     power_thresh,                                  // power_thresh
-                                     SMOOTH_SCALE,                                  // smooth_scale
-                                     &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
-                                     n_bytes_per_bors,                              // input_data_bytes                         /2
-                                     &db_out->block[curblock_out],                  // s6_output_block
-                                     gpu_sem);                                      // semaphore to serialize GPU access
-#endif
-*/
-#ifdef SOURCE_FAST
-    // added by wei on 12/30/2021
-    // In Jeff's code, the data will be moved to GPU for data processing
-    // In my code, I'm going to move the data to output buffer directly
-    memcpy(&db_out->block[curblock_out].data,
-           &db_in->block[curblock_in].data,
-           N_DATA_BYTES_PER_BLOCK);  
-#else
-    printf("It's not for FAST, I don't care about it for now. \r\n");
-#endif
-//fprintf(stderr, "spectroscopy() returned %ld for beam %d\n", nhits, beam_i);
+                memcpy(&db_out->block[curblock_out].data,
+                        &db_in->block[curblock_in].data,
+                        N_DATA_BYTES_PER_BLOCK); 
                 total_hits += nhits;
                 clock_gettime(CLOCK_MONOTONIC, &stop);
                 elapsed_gpu_ns += ELAPSED_NS(start, stop);
                 gpu_block_count++;
-
-            }  //  for(int beam_i = 0; beam_i < N_BEAMS; beam_i++)
-        }  // if(num_coarse_chan)
+            }
+        }
 
         hashpipe_status_lock_safe(&st);
        	hputi4(st.buf, "NUMHITS", total_hits);
@@ -303,25 +159,16 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         hputi4(st.buf, "GPUMXECT", max_error_count);
         hashpipe_status_unlock_safe(&st);
 
-        // Mark output block as full and advance
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
 
-        // Mark input block as free and advance
-        //memset((void *)&db_in->block[curblock_in], 0, sizeof(s6_input_block_t));     // TODO re-init first
         hashpipe_databuf_set_free((hashpipe_databuf_t *)db_in, curblock_in);
         curblock_in = (curblock_in + 1) % db_in->header.n_block;
 
         /* Check for cancel */
         pthread_testcancel();
     }
-    /*
-    // Thread success!
-    gpu_fini();		// take care of any gpu cleanup, eg profiler flushing
-    // unpin the databufs from cudu's point of view
-    cudaHostUnregister((void *) db_in);
-    cudaHostUnregister((void *) db_out);
-    */
+
 	sem_unlink(gpu_sem_name);
     return NULL;
 }
