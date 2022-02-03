@@ -26,22 +26,44 @@
 #include "hashpipe.h"
 #include "s6_databuf.h"
 //#include "s6GPU.h"
+#include "fast_gpu_lib/fast_gpu.h"
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
 static void *run(hashpipe_thread_args_t * args)
 {
-    printf("gpu_thread_V0.1\r\n");
+    
     // Local aliases to shorten access to args fields
     s6_input_databuf_t *db_in = (s6_input_databuf_t *)args->ibuf;
     s6_output_databuf_t *db_out = (s6_output_databuf_t *)args->obuf;
     hashpipe_status_t st = args->st;
     const char * status_key = args->thread_desc->skey;
 
-#ifdef DEBUG_SEMS
-    fprintf(stderr, "s/tid %lu/                      GPU/\n", pthread_self());
-#endif
+    /*
+    * The following is about GPU init
+    */
+    // Check gpu status
+    
+    int status;
+    status = GPU_GetDevInfo();
+    if(status < 0)
+        printf("No device will handle overlaps.\r\n");
+    else   
+        printf("overlaps are supported on the device.\r\n");
+    
+    /*  
+    // Malloc buffer on GPU
+    GPU_MallocBuffer();
+
+    // Preparing weights for PFB FIR
+    float *weights;
+    weights = (float*) malloc(TAPS*CHANNELS*sizeof(float));
+    printf("preparing for weights...\r\n");
+    for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
+    printf("weights ready.\r\n");
+    GPU_MoveWeightsFromHost(weights);
+    */
 
     int rv;
     uint64_t start_mcount, last_mcount=0;

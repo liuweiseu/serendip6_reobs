@@ -48,7 +48,7 @@ int main()
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
 
-
+    
     int64_t elapsed_gpu_ns3  = 0;
     clock_gettime(CLOCK_MONOTONIC, &start);
     // Generate fake data
