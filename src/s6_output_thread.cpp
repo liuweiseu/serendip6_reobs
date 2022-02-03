@@ -45,7 +45,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx)
     {
         fprintf(stderr, "file created.");
     }
-    fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
+    fwrite((char*)(db->block[block_idx].data),N_DATA_BYTES_PER_BLOCK,sizeof(float),fp);
     fclose(fp);
     return 0;
 }

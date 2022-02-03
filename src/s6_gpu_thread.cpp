@@ -52,7 +52,6 @@ static void *run(hashpipe_thread_args_t * args)
     else   
         printf("overlaps are supported on the device.\r\n");
     
-    /*  
     // Malloc buffer on GPU
     GPU_MallocBuffer();
 
@@ -63,7 +62,17 @@ static void *run(hashpipe_thread_args_t * args)
     for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
-    */
+    free(weights);
+
+    // create cufft plan
+    status = GPU_CreateFFTPlan();
+    if(status == -1)
+    {
+        printf("The cuFFT plan can't be created!\r\n");
+        return NULL;
+    }
+    else
+        printf("The cuFFT plan is created successfully!\r\n");
 
     int rv;
     uint64_t start_mcount, last_mcount=0;
@@ -164,9 +173,20 @@ static void *run(hashpipe_thread_args_t * args)
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {
                 size_t nhits = 0; 
-                memcpy(&db_out->block[curblock_out].data,
-                        &db_in->block[curblock_in].data,
-                        N_DATA_BYTES_PER_BLOCK); 
+                /*
+                memcpy(db_out->block[curblock_out].data,
+                        db_in->block[curblock_in].data,
+                        N_DATA_BYTES_PER_BLOCK);
+                */
+                GPU_MoveDataFromHost((char*)(db_in->block[curblock_in].data)); 
+                status = GPU_DoPFB();
+                if(status == -1)
+                {
+                    printf("PFB failed!\r\n");
+                    return NULL;
+                }
+                GPU_MoveDataToHost(db_out->block[curblock_out].data);
+                
                 total_hits += nhits;
                 clock_gettime(CLOCK_MONOTONIC, &stop);
                 elapsed_gpu_ns += ELAPSED_NS(start, stop);
@@ -192,6 +212,10 @@ static void *run(hashpipe_thread_args_t * args)
     }
 
 	sem_unlink(gpu_sem_name);
+
+    // close everything
+    GPU_DestroyPlan();
+    GPU_FreeBuffer();
     return NULL;
 }
 

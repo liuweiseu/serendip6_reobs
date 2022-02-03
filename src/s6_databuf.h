@@ -69,7 +69,7 @@
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
 //#define N_TIME_SAMPLES              ((uint64_t) 512*1024*1024)               
-#define N_TIME_SAMPLES              ((uint64_t) 256)     //*1024*1024           
+#define N_TIME_SAMPLES              ((uint64_t) 65536)     //*1024*1024           
 //#define N_TIME_SAMPLES              ((uint64_t) 1024*1024)               
 #define N_FINE_CHAN 				(N_TIME_SAMPLES/2)                
 //#define N_FINE_CHAN 				(N_TIME_SAMPLES/2 + 1)                
@@ -172,7 +172,8 @@ typedef struct s6_output_block {
   int   fine_chan   [N_BORS][MAXGPUHITS];
   float cc_pwrs_x   [N_BORS][N_COARSE_CHAN_PER_BORS];    // coarse channel mean powers for polX
   float cc_pwrs_y   [N_BORS][N_COARSE_CHAN_PER_BORS];    // coarse channel mean powers for polY
-  uint64_t data[(N_DATA_BYTES_PER_BLOCK/sizeof(uint64_t))]; //added by Wei on 12/30/2021 for testing
+  //uint64_t data[(N_DATA_BYTES_PER_BLOCK/sizeof(uint64_t))]; //added by Wei on 12/30/2021 for testing
+  float data[N_DATA_BYTES_PER_BLOCK];
 } s6_output_block_t;
 
 typedef struct s6_output_databuf {

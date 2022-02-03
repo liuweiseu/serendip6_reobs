@@ -106,6 +106,14 @@ void GPU_MoveWeightsFromHost(float *weights)
 // move data from host to GPU
 void GPU_MoveDataFromHost(DIN_TYPE *din)
 {
+        printf("din: %d %d %d %d %d %d %d %d \r\n",din[0],
+    din[1],
+    din[2],
+    din[3],
+    din[4],
+    din[5],
+    din[6],
+    din[7]);
     cudaMemcpy(data_in_gpu, din, SAMPLES * sizeof(DIN_TYPE), cudaMemcpyHostToDevice);
 }
 
@@ -122,13 +130,20 @@ void GPU_MoveDataToHost(DOUT_TYPE *dout)
     for(int i = 0; i < OUTPUT_LEN; i++)
         dout[i] = data_out_host[i].x * data_out_host[i].x + \
                   data_out_host[i].y * data_out_host[i].y;
+       printf("din: %f %f %f %f %f %f %f %f \r\n",dout[0],
+    dout[1],
+    dout[2],
+    dout[3],
+    dout[4],
+    dout[5],
+    dout[6],
+    dout[7]);
 
 }
 
 // do PFB
 int GPU_DoPFB()
 {
-
     pfb_fir<<<dimgrid,dimblock>>>(
         (float *)pfbfir_out_gpu,  
         (char*)data_in_gpu,   

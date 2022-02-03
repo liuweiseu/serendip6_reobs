@@ -47,6 +47,7 @@ int main()
     for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
+    free(weights);
 
     
     int64_t elapsed_gpu_ns3  = 0;
