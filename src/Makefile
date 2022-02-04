@@ -9,7 +9,7 @@ S6_LOCATION =
 #S6_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ -mavx -msse4
 #S6_FAST_LIB_CCFLAGS modified by Wei , original flgas have -lS6GPU inside
 S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
-		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I/usr/local/cuda-11.2/include -I. \
+		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I/usr/local/cuda/include -I. \
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis \
 		     -lhashpipe -lrt -lhiredis -lcfitsio -lm -std=c++11 \
 			 -lfastgpu
