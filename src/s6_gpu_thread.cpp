@@ -88,11 +88,12 @@ static void *run(hashpipe_thread_args_t * args)
     hputr4(st.buf, "POWTHRSH", power_thresh);
     hashpipe_status_unlock_safe(&st);
     //init_device(gpu_dev);
-	char gpu_sem_name[256];
+	/*
+    char gpu_sem_name[256];
 	sem_t * gpu_sem;
 	sprintf(gpu_sem_name, "serendip6_gpu_sem_device_%d", gpu_dev);
 	gpu_sem = sem_open(gpu_sem_name, O_CREAT, S_IRWXU, 1);
-	
+	*/
     
     uint64_t num_coarse_chan = N_COARSE_CHAN;
 
@@ -164,9 +165,11 @@ static void *run(hashpipe_thread_args_t * args)
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {
                 size_t nhits = 0; 
-                memcpy(&db_out->block[curblock_out].data,
-                        &db_in->block[curblock_in].data,
-                        N_DATA_BYTES_PER_BLOCK); 
+                /*
+                memcpy(db_out->block[curblock_out].data,
+                        db_in->block[curblock_in].data,
+                        N_DATA_BYTES_PER_BLOCK);
+                */         
                 total_hits += nhits;
                 clock_gettime(CLOCK_MONOTONIC, &stop);
                 elapsed_gpu_ns += ELAPSED_NS(start, stop);
@@ -191,7 +194,7 @@ static void *run(hashpipe_thread_args_t * args)
         pthread_testcancel();
     }
 
-	sem_unlink(gpu_sem_name);
+	//sem_unlink(gpu_sem_name);
     return NULL;
 }
 

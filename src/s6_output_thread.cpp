@@ -45,7 +45,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx)
     {
         fprintf(stderr, "file created.");
     }
-    fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
+    //fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
     fclose(fp);
     return 0;
 }
@@ -359,7 +359,7 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_FAST
             etf.file_chan = 0;                                  // constant - FAST data not coarse channelized
             //rv = write_etfits_fast(db, block_idx, &etf, faststatus_p); // modified by Wei. We don't need fits file for now.
-            rv = write_to_file(db,block_idx);
+            //rv = write_to_file(db,block_idx);
             etf.file_num ++; // added by Wei on 12/30/2021. It's for testing
 #endif
             if(rv) {
