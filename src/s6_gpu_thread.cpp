@@ -174,7 +174,7 @@ static void *run(hashpipe_thread_args_t * args)
             db_in->block[curblock_in].data,
             N_DATA_BYTES_PER_BLOCK);
         */ 
-        GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
+        //GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
         status = GPU_DoPFB();
         if(status == -1)
         {
@@ -185,7 +185,7 @@ static void *run(hashpipe_thread_args_t * args)
         {
             printf("PFB success!\r\n");
         }        
-        GPU_MoveDataToHost(db_out->block[curblock_out].data);
+        //GPU_MoveDataToHost(db_out->block[curblock_out].data);
         /*
         hashpipe_status_lock_safe(&st);
         hputr4(st.buf, "GPUMXERR", max_error);
