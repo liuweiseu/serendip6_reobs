@@ -179,13 +179,13 @@ static void *run(hashpipe_thread_args_t * args)
         GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
         status = GPU_DoPFB();
         if(status == -1)
-        {
-            printf("PFB failed!\r\n");
-            return 0;
+        {   
+            fprintf(stderr, "PFB failed!\r\n");
+            return NULL;
         }
         else
         {
-            printf("PFB success!\r\n");
+            fprintf(stderr, "PFB Success!\r\n");
         }        
         GPU_MoveDataToHost(db_out->block[curblock_out].data);
         /*
