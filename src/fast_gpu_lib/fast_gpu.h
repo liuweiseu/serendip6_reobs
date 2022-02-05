@@ -14,7 +14,7 @@ struct FFT_RES
 #define DOUT_TYPE   float   //struct FFT_RES
 
 #define CHANNELS    65536     //65536
-#define SPECTRA     4      //4096
+#define SPECTRA     4         //4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
 #define START_BIN   0
@@ -25,6 +25,7 @@ struct FFT_RES
 int GPU_GetDevInfo();
 int Host_MallocBuffer(DIN_TYPE **buf_in, DOUT_TYPE **buf_out);
 void GPU_MallocBuffer();
+void PFBParameters();
 int GPU_CreateFFTPlan();
 void GPU_MoveWeightsFromHost(float *weights);
 void GPU_MoveDataFromHost(DIN_TYPE *din);

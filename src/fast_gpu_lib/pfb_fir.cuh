@@ -269,7 +269,6 @@ KERNEL REQD_WORK_GROUP_SIZE(WGS, 1, 1) void pfb_fir(
     int out_offset           // Number of samples to skip from the start of *out. Must be a multiple of `step` to make sense.
 )
 {
-    printf("Hey!\r\n");
     // Figure out where our thread block has to work.
     int group_x = get_group_id(0);
     int group_y = get_group_id(1);
@@ -328,8 +327,7 @@ KERNEL REQD_WORK_GROUP_SIZE(WGS, 1, 1) void pfb_fir(
          */
         //samples[(i + TAPS - 1) % TAPS] = get_sample_10bit(in, in_offset + idx);
         samples[(i + TAPS - 1) % TAPS] = in[in_offset + idx];
-            //printf("in[%d]:%d\r\n",in_offset + idx, in[in_offset + idx]);
-            printf("Hello from GPU\r\n");
+        //printf("in:%d\r\n",in[in_offset + idx]);
         // Implement the actual FIR filter by multiplying samples by weights and summing.
         float sum = 0.0f;
         for (int j = 0; j < TAPS; j++)
@@ -339,4 +337,3 @@ KERNEL REQD_WORK_GROUP_SIZE(WGS, 1, 1) void pfb_fir(
         out[idx] = sum;
     }
 }
-

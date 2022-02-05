@@ -23,11 +23,12 @@ cufftComplex    *data_out_host;     // output data on host
 cufftHandle plan;
 
 // PFB FIR parameters
-int step        = CHANNELS;
-int out_n       = step * SPECTRA;
-int stepy       = out_n/(256*1024)*step;
-int groupsx     = step/WGS;
-int groupsy     = (out_n + stepy - 1)/stepy;
+
+static int step        = CHANNELS;
+static int out_n       = step * SPECTRA;
+static int stepy       = out_n/(256*1024)*step;
+static int groupsx     = step/WGS;
+static int groupsy     = (out_n + stepy - 1)/stepy;
 dim3 dimgrid(groupsx*WGS, groupsy);
 dim3 dimblock(WGS,1);
 
@@ -52,6 +53,15 @@ int GPU_GetDevInfo()
         return 0;
 }
 
+void PFBParameters()
+{
+    printf("%-25s: %d\r\n", "step", step);
+    printf("%-25s: %d\r\n", "out_n", out_n);
+    printf("%-25s: %d\r\n", "stepy", stepy);
+    printf("%-25s: %d\r\n", "groupsx", groupsx);
+    printf("%-25s: %d\r\n", "groupsy", groupsy);
+
+}
 // This func is used for allocating pinned memory on the host computer 
 //int Host_MallocBuffer(DIN_TYPE *buf_in, DOUT_TYPE *buf_out)
 int Host_MallocBuffer(DIN_TYPE **buf_in, DOUT_TYPE **buf_out)
@@ -128,8 +138,6 @@ void GPU_MoveDataToHost(DOUT_TYPE *dout)
 // do PFB
 int GPU_DoPFB()
 {
-    printf("in GPU_DoFPB()\r\n");
-    
     pfb_fir<<<dimgrid,dimblock>>>(
         (float *)pfbfir_out_gpu,  
         (char*)data_in_gpu,   
@@ -139,8 +147,7 @@ int GPU_DoPFB()
         stepy,
         0,
         0
-        ); 
-        
+        );
     cudaDeviceSynchronize();
     cufftResult fft_ret;
     fft_ret = cufftExecR2C(plan, (cufftReal*)pfbfir_out_gpu, (cufftComplex*) data_out_gpu);
