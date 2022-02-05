@@ -128,7 +128,8 @@ void GPU_MoveDataToHost(DOUT_TYPE *dout)
 // do PFB
 int GPU_DoPFB()
 {
-
+    printf("in GPU_DoFPB()\r\n");
+    
     pfb_fir<<<dimgrid,dimblock>>>(
         (float *)pfbfir_out_gpu,  
         (char*)data_in_gpu,   
@@ -139,6 +140,7 @@ int GPU_DoPFB()
         0,
         0
         ); 
+        
     cudaDeviceSynchronize();
     cufftResult fft_ret;
     fft_ret = cufftExecR2C(plan, (cufftReal*)pfbfir_out_gpu, (cufftComplex*) data_out_gpu);

@@ -186,6 +186,7 @@ void gen_fake_data(uint64_t *data) {
    for( size_t t=0; t<N_TIME_SAMPLES; t++ ) { 
        double f = 2*M_PI * t *fin/fs;
        float res = 127 * sin(f);
-       *(((char*)data)+t) = (char)res;
+       //*(((char*)data)+t) = (char)res;
+       *(((char*)data)+t) = 2;
    }
 }

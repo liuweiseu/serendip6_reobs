@@ -56,6 +56,7 @@ static void *run(hashpipe_thread_args_t * args)
     // Malloc buffer on GPU
     GPU_MallocBuffer();
 
+
     // Preparing weights for PFB FIR
     float *weights;
     weights = (float*) malloc(TAPS*CHANNELS*sizeof(float));
@@ -64,6 +65,15 @@ static void *run(hashpipe_thread_args_t * args)
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
     
+       // create cufft plan
+    status = GPU_CreateFFTPlan();
+    if(status == -1)
+    {
+        printf("The cuFFT plan can't be created!\r\n");
+        return 0;
+    }
+    else
+        printf("The cuFFT plan is created successfully!\r\n");
 
     int rv;
     uint64_t start_mcount, last_mcount=0;
@@ -165,10 +175,17 @@ static void *run(hashpipe_thread_args_t * args)
             N_DATA_BYTES_PER_BLOCK);
         */ 
         GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
-        GPU_DoPFB();        
+        status = GPU_DoPFB();
+        if(status == -1)
+        {
+            printf("PFB failed!\r\n");
+            return 0;
+        }
+        else
+        {
+            printf("PFB success!\r\n");
+        }        
         GPU_MoveDataToHost(db_out->block[curblock_out].data);
-
-
         /*
         hashpipe_status_lock_safe(&st);
         hputr4(st.buf, "GPUMXERR", max_error);
