@@ -14,8 +14,8 @@ struct FFT_RES
 #define DIN_TYPE    char
 #define DOUT_TYPE   float   //struct FFT_RES
 
-#define CHANNELS    4096     //65536
-#define SPECTRA     4       //4096
+#define CHANNELS    65536     //65536
+#define SPECTRA     4096      //4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
 #define START_BIN   0

@@ -5,7 +5,8 @@
 #include <cufft.h>
 #include "hashpipe_databuf.h"
 //#include "config.h"
-//#include "s6GPU.h"
+
+#include "fast_gpu_lib/fast_gpu.h"
 
 #define PAGE_SIZE               (4096)
 //#define CACHE_ALIGNMENT         (128)
@@ -68,11 +69,11 @@
 #define N_BEAMS                     19
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
-//#define N_TIME_SAMPLES              ((uint64_t) 512*1024*1024)               
-#define N_TIME_SAMPLES                ((uint64_t) 8192)     //*1024*1024           
-//#define N_TIME_SAMPLES              ((uint64_t) 1024*1024)               
-#define N_FINE_CHAN 				(N_TIME_SAMPLES/2)                
-//#define N_FINE_CHAN 				(N_TIME_SAMPLES/2 + 1)                
+//#define N_TIME_SAMPLES            ((uint64_t) 512*1024*1024)               
+#define N_TIME_SAMPLES              ((uint64_t) 256*1024*1024)     //*1024*1024           
+//#define N_TIME_SAMPLES            ((uint64_t) 1024*1024)               
+#define N_FINE_CHAN 				        (N_TIME_SAMPLES/2)                
+//#define N_FINE_CHAN 				      (N_TIME_SAMPLES/2 + 1)                
 #define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
@@ -164,17 +165,7 @@ typedef uint8_t s6_output_header_cache_alignment[
 typedef struct s6_output_block {
   s6_output_block_header_t header;
   s6_output_header_cache_alignment padding; // Maintain cache alignment
-  /*
-  float power       [N_BORS][MAXGPUHITS];
-  float baseline    [N_BORS][MAXGPUHITS];
-  long  hit_indices [N_BORS][MAXGPUHITS];    
-  int   pol         [N_BORS][MAXGPUHITS];
-  int   coarse_chan [N_BORS][MAXGPUHITS];
-  int   fine_chan   [N_BORS][MAXGPUHITS];
-  float cc_pwrs_x   [N_BORS][N_COARSE_CHAN_PER_BORS];    // coarse channel mean powers for polX
-  float cc_pwrs_y   [N_BORS][N_COARSE_CHAN_PER_BORS];    // coarse channel mean powers for polY
-  */
-  uint64_t data[(N_DATA_BYTES_PER_BLOCK/sizeof(uint64_t))]; //added by Wei on 12/30/2021 for testing
+  float data[(OUTPUT_LEN)]; //modified by Wei on 02/04/2024. The output data is float
 } s6_output_block_t;
 
 typedef struct s6_output_databuf {

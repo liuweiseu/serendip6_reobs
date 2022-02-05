@@ -52,7 +52,7 @@ static void *run(hashpipe_thread_args_t * args)
     else   
         printf("overlaps are supported on the device.\r\n");
     
-    /*  
+      
     // Malloc buffer on GPU
     GPU_MallocBuffer();
 
@@ -63,11 +63,10 @@ static void *run(hashpipe_thread_args_t * args)
     for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
-    */
+    
 
     int rv;
     uint64_t start_mcount, last_mcount=0;
-    int s6gpu_error = 0;
     int curblock_in=0;
     int curblock_out=0;
     int error_count = 0, max_error_count = 0;
@@ -87,7 +86,7 @@ static void *run(hashpipe_thread_args_t * args)
     hgetr4(st.buf, "POWTHRSH", &power_thresh);
     hputr4(st.buf, "POWTHRSH", power_thresh);
     hashpipe_status_unlock_safe(&st);
-    //init_device(gpu_dev);
+
 	/*
     char gpu_sem_name[256];
 	sem_t * gpu_sem;
@@ -159,30 +158,24 @@ static void *run(hashpipe_thread_args_t * args)
 
         db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 
-        size_t total_hits = 0;
-        if(num_coarse_chan) {
-            int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
-            uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
-            for(int bors_i = 0; bors_i < n_bors; bors_i++) {
-                size_t nhits = 0; 
-                /*
-                memcpy(db_out->block[curblock_out].data,
-                        db_in->block[curblock_in].data,
-                        N_DATA_BYTES_PER_BLOCK);
-                */         
-                total_hits += nhits;
-                clock_gettime(CLOCK_MONOTONIC, &stop);
-                elapsed_gpu_ns += ELAPSED_NS(start, stop);
-                gpu_block_count++;
-            }
-        }
 
+        /*
+        memcpy(db_out->block[curblock_out].data,
+            db_in->block[curblock_in].data,
+            N_DATA_BYTES_PER_BLOCK);
+        */ 
+        GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
+        GPU_DoPFB();        
+        GPU_MoveDataToHost(db_out->block[curblock_out].data);
+
+
+        /*
         hashpipe_status_lock_safe(&st);
-       	hputi4(st.buf, "NUMHITS", total_hits);
         hputr4(st.buf, "GPUMXERR", max_error);
         hputi4(st.buf, "GPUERCNT", error_count);
         hputi4(st.buf, "GPUMXECT", max_error_count);
         hashpipe_status_unlock_safe(&st);
+        */
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
