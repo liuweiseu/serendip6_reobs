@@ -126,6 +126,5 @@ void gen_fake_data(uint64_t *data) {
        double f = 2*M_PI * t *fin/fs;
        float res = 127 * sin(f);
        *(((char*)data)+t) = (char)res;
-       //*(((char*)data)+t) = 2;
    }
 }

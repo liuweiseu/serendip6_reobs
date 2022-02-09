@@ -72,8 +72,7 @@ static void *run(hashpipe_thread_args_t * args)
         struct timespec sleep_dur, rem_sleep_dur;
         sleep_dur.tv_sec = 1;
         sleep_dur.tv_nsec = 0;
-        //fprintf(stderr, "fake net thread sleeping for %7.5f seconds\n", 
-        //        sleep_dur.tv_sec + (double)sleep_dur.tv_nsec/1000000000.0);
+
         nanosleep(&sleep_dur, &rem_sleep_dur);
 	
         /* Wait for new block to be free, then clear it
@@ -104,9 +103,6 @@ static void *run(hashpipe_thread_args_t * args)
         memset(db->block[block_idx].header.missed_pkts, 0, sizeof(uint64_t) * N_BEAM_SLOTS);
 
         if(gen_fake) {
-            //gen_fake = 0;
-            // All blocks will contain same fake data.
-            // TODO vary data by beam
 #define SLOW_GEN
 #ifdef SLOW_GEN 
             // Slow : gen fake data (with signals) for all beams, all blocks   
@@ -119,19 +115,18 @@ static void *run(hashpipe_thread_args_t * args)
 			char * cdata;
 			cdata = (char *)&(db->block[0].data[i]); 
 			for(uint64_t i = 0; i <  N_TIME_SAMPLES; i++) cdata[i] = i % (N_TIME_SAMPLES / 512);
-#endif
-            fprintf(stderr, "done generating fake data to block 0 beam 0\n");
-            for(int block_i = 1; block_i < N_INPUT_BLOCKS; block_i++) {
-                fprintf(stderr, "copying fake data to block %d\n", block_i);
-                //memcpy((void *)&db->block[block_i].data[0], (void *)&db->block[0].data[0], N_DATA_BYTES_PER_BLOCK); //modified by Wei
-                memcpy((void *)&db->block[block_i].data, (void *)&db->block[0].data, N_DATA_BYTES_PER_BLOCK);
-            }
+#endif      
+            if(block_idx != 0 )
+                memcpy((void *)&db->block[block_idx].data, (void *)&db->block[0].data, N_DATA_BYTES_PER_BLOCK);
+            fprintf(stderr, "done generating fake data to block %d beam 0\n",block_idx);
         }
 
         hashpipe_status_lock_safe(&st);
+        /*
         hputr4(st.buf, "NETMXERR", max_error);
         hputi4(st.buf, "NETERCNT", error_count);
         hputi4(st.buf, "NETMXECT", max_error_count);
+        */
         hashpipe_status_unlock_safe(&st);
 
         // Mark block as full

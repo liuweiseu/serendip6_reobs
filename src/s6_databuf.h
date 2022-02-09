@@ -68,12 +68,9 @@
 #define N_BYTES_PER_SAMPLE      	  1
 #define N_BEAMS                     19
 #define N_BEAM_SLOTS                1
-#define N_COARSE_CHAN               1
-//#define N_TIME_SAMPLES            ((uint64_t) 512*1024*1024)               
-#define N_TIME_SAMPLES              ((uint64_t) 256*1024*1024)     //*1024*1024           
-//#define N_TIME_SAMPLES            ((uint64_t) 1024*1024)               
-#define N_FINE_CHAN 				        (N_TIME_SAMPLES/2)                
-//#define N_FINE_CHAN 				      (N_TIME_SAMPLES/2 + 1)                
+#define N_COARSE_CHAN               1             
+#define N_TIME_SAMPLES              ((uint64_t) 256*1024*1024)     //*1024*1024                       
+#define N_FINE_CHAN 				        (N_TIME_SAMPLES/2)                               
 #define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
@@ -87,9 +84,6 @@
 // for FAST, the clock frequency is hard set to 1GHz, expressed here in MHz
 #define CLOCK_FREQ		1000.0
 #endif
-
-//#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
-//#define N_BYTES_PER_SUBSPECTRUM         (N_COARSE_CHAN_PER_SUBSPECTRUM * N_BYTES_PER_SAMPLE * N_POLS_PER_BEAM)
 
 #define N_SAMPLES_PER_BEAM      (N_FINE_CHAN * N_COARSE_CHAN * N_POLS_PER_BEAM)
 #define N_BYTES_PER_BEAM        (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BEAM)

@@ -94,9 +94,6 @@ static void *run(hashpipe_thread_args_t * args)
 	float power_thresh = POWER_THRESH;	// default
     hashpipe_status_lock_safe(&st);
     hgeti4(st.buf, "GPUDEV", &gpu_dev);
-    hgeti4(st.buf, "MAXHITS", &maxhits);
-    hgetr4(st.buf, "POWTHRSH", &power_thresh);
-    hputr4(st.buf, "POWTHRSH", power_thresh);
     hashpipe_status_unlock_safe(&st);
 
 	/*
@@ -170,12 +167,6 @@ static void *run(hashpipe_thread_args_t * args)
 
         db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 
-
-        /*
-        memcpy(db_out->block[curblock_out].data,
-            db_in->block[curblock_in].data,
-            N_DATA_BYTES_PER_BLOCK);
-        */ 
         GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
         status = GPU_DoPFB();
         if(status == -1)
