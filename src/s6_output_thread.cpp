@@ -7,26 +7,16 @@
 #include <math.h>
 #include <string.h>
 #include <pthread.h>
-//#include <hiredis/hiredis.h>
 
 /*
 #include <cuda.h>
 #include <cufft.h>
-#include <s6GPU.h>
 */
 #include <sched.h>
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
-#include "s6_obs_data_fast.h"
 
-/*
-#include "s6_obs_data.h"
-#include "s6_obs_data_gbt.h"
-#include "s6_obs_data_fast.h"
-#include "s6_etfits.h"
-#include "s6_redis.h"
-*/
 #define SET_BIT(val, bitIndex) val |= (1 << bitIndex)
 #define CLEAR_BIT(val, bitIndex) val &= ~(1 << bitIndex)
 #define BIT_IS_SET(val, bitIndex) (val & (1 << bitIndex))
@@ -71,8 +61,6 @@ static void *run(hashpipe_thread_args_t * args)
     const char * status_key = args->thread_desc->skey;
 
 // TODO all of the SOURCE_FAST sections are copies of SOURCE_DIBAS sections as place holders.
-    faststatus_t faststatus;
-    faststatus_t * faststatus_p = &faststatus;
     char *prior_receiver = (char *)malloc(32);
  
 
@@ -137,19 +125,9 @@ static void *run(hashpipe_thread_args_t * args)
         // TODO check mcnt
 
 		// time stamp for this block of hits
-		faststatus_p->TIME = db->block[block_idx].header.time_sec +
-						     db->block[block_idx].header.time_nsec/1e9;
 
         hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
-        if(!testmode) {
-            hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  // raw data dump request status
-        } else {
-
-            memset((void *)faststatus_p, 0, sizeof(faststatus_t));  // test mode - zero entire gbtstatus
-			strcpy(faststatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
-																	//     test mode for downstream processes
-        }
 
     // Start idle checking
     // generic redis error check. 
@@ -157,31 +135,10 @@ static void *run(hashpipe_thread_args_t * args)
         hputi4(st.buf, "IDLE", idle);   // finally, make our idle condition live
     // End idle checking
 
-        faststatus.coarse_chan_id = 0;
-
         hashpipe_status_lock_safe(&st);
 
         hashpipe_status_unlock_safe(&st);
 
-
-
-        // test for and handle file change events
-        // no such events exit while in test mode
-        if(!testmode) {
-
-            if(strcmp(faststatus.RECEIVER,prior_receiver) != 0 ||
-
-               run_always      != prior_run_always            ||
-               num_coarse_chan != db->block[block_idx].header.num_coarse_chan) {
-
-                // re-init
-
-                strcpy(prior_receiver,faststatus.RECEIVER);
-
-                num_coarse_chan  = db->block[block_idx].header.num_coarse_chan; 
-                prior_run_always = run_always;
-            }
-        }   // end test for and handle file change events
 
 
         if(testmode || run_always) {

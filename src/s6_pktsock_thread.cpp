@@ -34,8 +34,6 @@
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
-#include "s6_logger.h"
-#include "fitshead.h"
 
 #define DEBUG_NET
 
@@ -1135,7 +1133,7 @@ pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pkts
 			if(rv == -1) {
 				perror("writing voltage file");
 			} else {
-				fprintf(stderr, "wrote %ld bytes to voltage file\n", rv);
+				fprintf(stderr, "wrote %d bytes to voltage file\n", rv);
 			}
 		}
 		close(fd);

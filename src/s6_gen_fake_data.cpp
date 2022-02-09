@@ -28,7 +28,6 @@
 #include "s6_databuf.h"
 #include "hashpipe.h"
 
-#ifdef SOURCE_FAST
 // Functors
 // -----------------------------------------------------------------------------
 char generate_gaussian_real_8b() {
@@ -76,62 +75,6 @@ void gen_time_series(int input_i, std::vector<char> &h_raw_timeseries) {
     }
 }
 
-#else
-
-// Functors
-// -----------------------------------------------------------------------------
-char2 generate_gaussian_complex_8b() {
-// -----------------------------------------------------------------------------
-    float mu    = 0.f;
-    float sigma = 32.f;
-    float u1 = drand48();					// random... 
-    float r = sqrtf(-2*logf(u1)) * sigma;	// ...exponential amplitude 
-    float u2 = drand48();					// random frequency
-    return make_char2(mu + r*cosf(2*M_PI * u2),
-                      mu + r*sinf(2*M_PI * u2));
-
-}
-
-
-
-// -----------------------------------------------------------------------------
-//void gen_time_series(int f_factor, int input_i, std::vector<char2> &h_raw_timeseries) {
-void gen_time_series(int input_i, std::vector<char2> &h_raw_timeseries) {
-// -----------------------------------------------------------------------------
-// First we fill the time domain vector with noise.
-// To this we add some easily identifiable signals such that they will show up in a
-// specific subset of coarse and fine channels in the frequency domain.
-
-    // generate noise
-    //srand48(1234);                // constant seed
-    srand48((long int)time(NULL));  // seed with changing time
-    std::generate(h_raw_timeseries.begin(), h_raw_timeseries.end(), generate_gaussian_complex_8b);
-
-    // put signals in the quarter way points in the coarse channel range
-    for( size_t cc=0; cc<N_COARSE_CHAN_PER_BORS; cc += ceil((double)N_COARSE_CHAN_PER_BORS/4.0)) {   
-        for( size_t t=0; t<N_TIME_SAMPLES; t++ ) {             	// for each time (ie, fine channel in freq domain)
-         	int locator     = t*N_COARSE_CHAN_PER_BORS + cc; 	// stay in this "time", ie stride by N_CC * cc offset      
-           	double f       	= 2*M_PI * t/N_TIME_SAMPLES;	  	// 1 cycle completes every N_TIME_SAMPLES. Final frequencies
-																//   are determined by the multipliers below.  (Without the
-																//   /N_TIME_SAMPLES, f would be 0 for any integer t.) 
-            float amplitude = 10.0;
-            // Put signals at the quarter way points in the "fine channel" range.
-            // This is data for a complex to complex FFT so the number of fine channels is == to the number of time samples.
-            h_raw_timeseries[locator].x += amplitude * cos(0.111   + 1                             * f);
-            h_raw_timeseries[locator].y += amplitude * sin(0.111   + 1                             * f);
-            h_raw_timeseries[locator].x += amplitude * cos(10.111  + (long)(N_TIME_SAMPLES*0.25)   * f);
-            h_raw_timeseries[locator].y += amplitude * sin(10.111  + (long)(N_TIME_SAMPLES*0.25)   * f);
-            h_raw_timeseries[locator].x += amplitude * cos(100.111 + (long)(N_TIME_SAMPLES*0.5)    * f);
-            h_raw_timeseries[locator].y += amplitude * sin(100.111 + (long)(N_TIME_SAMPLES*0.5)    * f);
-            h_raw_timeseries[locator].x += amplitude * cos(100.111 + (long)(N_TIME_SAMPLES*0.75)   * f);
-            h_raw_timeseries[locator].y += amplitude * sin(100.111 + (long)(N_TIME_SAMPLES*0.75)   * f);
-            h_raw_timeseries[locator].x += amplitude * cos(100.111 +        N_TIME_SAMPLES-1       * f);
-            h_raw_timeseries[locator].y += amplitude * sin(100.111 +        N_TIME_SAMPLES-1       * f);
-        }
-    }
-}
-
-#endif
 
 /*
 // -----------------------------------------------------------------------------
@@ -177,10 +120,6 @@ void gen_fake_data(uint64_t *data) {
 */
 void gen_fake_data(uint64_t *data) {
     int i = 0;
-    /*
-    for(i=0;i<256;i++)
-        *(((unsigned char*)data)+i) = i;
-    */
    float fs = 1024;
    float fin  = 2;
    for( size_t t=0; t<N_TIME_SAMPLES; t++ ) { 

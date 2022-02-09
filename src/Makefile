@@ -5,19 +5,18 @@ CC          = gcc
 # S6_LOCATION="-D SOURCE_S6"
 S6_LOCATION = "-D SOURCE_FAST"
 #S6_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ -mavx -msse4
-#S6_FAST_LIB_CCFLAGS modified by Wei , original flgas have -lS6GPU inside
 S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I/usr/local/cuda/include -I. \
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis \
 		     -lhashpipe -lrt -lm -lfastgpu -std=c++14\
 
-S6_FAST_LIB_TARGET   = serendip6.so
-S6_FAST_LIB_SOURCES  = s6_databuf.cpp \
-		  s6_pktsock_thread.cpp \
-		  s6_gen_fake_data.cpp \
-		  s6_fake_net_thread.cpp \
-		  s6_gpu_thread.cpp \
-		  s6_output_thread.cpp 
+S6_FAST_LIB_TARGET   = 	serendip6.so
+S6_FAST_LIB_SOURCES  = 	s6_databuf.cpp \
+		  				s6_pktsock_thread.cpp \
+		  				s6_gen_fake_data.cpp \
+		  				s6_fake_net_thread.cpp \
+		  				s6_gpu_thread.cpp \
+		  				s6_output_thread.cpp 
 
 S6_FAST_LIB_INCLUDES = s6_databuf.h \
 		  
