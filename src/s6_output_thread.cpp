@@ -32,7 +32,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx)
     }
     else
     {
-        fprintf(stderr, "file created.");
+        fprintf(stderr, "file created.\r\n");
     }
     fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
     fclose(fp);

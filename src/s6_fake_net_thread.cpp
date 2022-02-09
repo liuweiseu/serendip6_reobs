@@ -33,7 +33,6 @@ static void *run(hashpipe_thread_args_t * args)
     int i, rv;
     uint64_t mcnt = 0;
     uint64_t num_coarse_chan = N_COARSE_CHAN;
-    uint64_t *data;
     int block_idx = 0;
     int error_count = 0, max_error_count = 0;
     float error, max_error = 0.0;
@@ -106,9 +105,10 @@ static void *run(hashpipe_thread_args_t * args)
 #define SLOW_GEN
 #ifdef SLOW_GEN 
             // Slow : gen fake data (with signals) for all beams, all blocks   
-            fprintf(stderr, "slowly generating fake data (sine waves) to block 0 beam 0...\n");
+            fprintf(stderr, "slowly generating fake data (sine waves) to block %d beam 0...\n", block_idx);
             //gen_fake_data(&(db->block[0].data[0])); //modified by Wei
-            gen_fake_data(&(db->block[0].data[0]));
+            //gen_fake_data(&(db->block[0].data[0]));
+            gen_fake_data(&(db->block[block_idx].data[0]));
 #else
 			// Fast : quick and dirty data gen - saw tooth
             fprintf(stderr, "quickly generating fake data (saw tooth) to block 0 beam 0...\n");
@@ -116,8 +116,6 @@ static void *run(hashpipe_thread_args_t * args)
 			cdata = (char *)&(db->block[0].data[i]); 
 			for(uint64_t i = 0; i <  N_TIME_SAMPLES; i++) cdata[i] = i % (N_TIME_SAMPLES / 512);
 #endif      
-            if(block_idx != 0 )
-                memcpy((void *)&db->block[block_idx].data, (void *)&db->block[0].data, N_DATA_BYTES_PER_BLOCK);
             fprintf(stderr, "done generating fake data to block %d beam 0\n",block_idx);
         }
 
@@ -137,9 +135,6 @@ static void *run(hashpipe_thread_args_t * args)
         hashpipe_status_lock_safe(&st);
         hputi4(st.buf, "NET_BLKIN", block_idx);
         hashpipe_status_unlock_safe(&st);
-        mcnt++;
-        // uncomment the following to test dynamic setting of num_coarse_chan
-        //num_coarse_chan--;
 
         /* Will exit if thread has been cancelled */
         pthread_testcancel();
