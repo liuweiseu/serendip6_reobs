@@ -202,7 +202,7 @@ __device__ static inline int as_int(float x)
 
 
 #define WGS 4 //128
-#define TAPS 8
+#define TAPS 4
 
 /* Return the byte index in the chunk where the start of your 10-bit sample will
  * be. The sample will be spread over two successive bytes but we just need to
@@ -327,7 +327,6 @@ KERNEL REQD_WORK_GROUP_SIZE(WGS, 1, 1) void pfb_fir(
          */
         //samples[(i + TAPS - 1) % TAPS] = get_sample_10bit(in, in_offset + idx);
         samples[(i + TAPS - 1) % TAPS] = in[in_offset + idx];
-        //printf("in:%d\r\n",in[in_offset + idx]);
         // Implement the actual FIR filter by multiplying samples by weights and summing.
         float sum = 0.0f;
         for (int j = 0; j < TAPS; j++)
@@ -337,3 +336,4 @@ KERNEL REQD_WORK_GROUP_SIZE(WGS, 1, 1) void pfb_fir(
         out[idx] = sum;
     }
 }
+

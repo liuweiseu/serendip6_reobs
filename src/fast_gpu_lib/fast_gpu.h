@@ -2,19 +2,13 @@
 #ifndef _FASTGPU_H
 #define _FASTGPU_H
 
-#define TAPS 8
+#define TAPS 4
  
-struct FFT_RES
-{
-    float re;
-    float im;
-};
-
 #define DIN_TYPE    char
-#define DOUT_TYPE   float   //struct FFT_RES
+#define DOUT_TYPE   float //struct FFT_RES
 
-#define CHANNELS    65536     //65536
-#define SPECTRA     4093         //4096
+#define CHANNELS    65536
+#define SPECTRA     4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
 #define START_BIN   0
@@ -22,10 +16,10 @@ struct FFT_RES
 #define CH_PER_SPEC (STOP_BIN - START_BIN + 1)
 #define OUTPUT_LEN  SPECTRA * CH_PER_SPEC
 
-int GPU_GetDevInfo();
+void GPU_GetDevInfo();
+int GPU_SetDevice(int gpu_dev);
 int Host_MallocBuffer(DIN_TYPE **buf_in, DOUT_TYPE **buf_out);
 void GPU_MallocBuffer();
-void PFBParameters();
 int GPU_CreateFFTPlan();
 void GPU_MoveWeightsFromHost(float *weights);
 void GPU_MoveDataFromHost(DIN_TYPE *din);

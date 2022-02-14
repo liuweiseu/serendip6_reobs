@@ -46,7 +46,8 @@ static void *run(hashpipe_thread_args_t * args)
     // Check gpu status
     
     int status;
-    status = GPU_GetDevInfo();
+    GPU_GetDevInfo();
+    status = GPU_SetDevice(0);
     if(status < 0)
         printf("No device will handle overlaps.\r\n");
     else   

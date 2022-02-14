@@ -9,7 +9,7 @@ SRC		= fast_gpu.cu
 NVCCFLAG  = -Xcompiler -fPIC --shared \
 			-I/usr/local/cuda/include \
 		  	-L/usr/local/cuda/lib64   \
-		  	-lcufft -arch=sm_61
+		  	-lcufft					
 
 ${TARGET}: ${SRC} ${INC} 
 	${NVCC} -o $@ ${SRC} ${NVCCFLAG}
@@ -17,6 +17,6 @@ ${TARGET}: ${SRC} ${INC}
 
 .PHONY: clean install
 install:
-	install -p ${TARGET} "/usr/local/lib"
+	install -p ${TARGET} "/usr/local/lib" 
 clean:
 	rm ${TARGET} 

@@ -23,7 +23,6 @@ cufftComplex    *data_out_host;     // output data on host
 cufftHandle plan;
 
 // PFB FIR parameters
-
 static int step        = CHANNELS;
 static int out_n       = step * SPECTRA;
 static int stepy       = out_n/(256*1024)*step;
@@ -32,13 +31,30 @@ static int groupsy     = (out_n + stepy - 1)/stepy;
 dim3 dimgrid(groupsx*WGS, groupsy);
 dim3 dimblock(WGS,1);
 
-int GPU_GetDevInfo()
+void GPU_GetDevInfo()
 {
+    int nDevices;
+  	cudaGetDeviceCount(&nDevices);
+	printf("\nGPUs on this system:\n");
+  	for (int i = 0; i < nDevices; i++) {
+    	cudaDeviceProp prop;
+    	cudaGetDeviceProperties(&prop, i);
+    	printf("Device Number: %d\n", i);
+    	printf("  Device name: %s\n", prop.name);
+    	printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
+    	printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
+    	printf("  Peak Memory Bandwidth (GB/s): %f\n\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+  	}
+}
+
+int GPU_SetDevice(int gpu_dev)
+{
+    int rv = cudaSetDevice(gpu_dev);
     cudaDeviceProp prop;
     int deviceID;
     cudaGetDevice(&deviceID);
     cudaGetDeviceProperties(&prop, deviceID);
-    printf("GPU Device Info:\r\n");
+    printf("The selected GPU Device Info:\r\n");
     printf("%-25s: %d\r\n", "MaxThreadsPerBlock", prop.maxThreadsPerBlock);
     printf("%-25s: %d %d %d\r\n","maxThreadsDim", prop.maxThreadsDim[0], \
                                                   prop.maxThreadsDim[1], \
@@ -46,20 +62,10 @@ int GPU_GetDevInfo()
     printf("%-25s: %d %d %d\r\n","maxGridSize",   prop.maxGridSize[0], \
                                                   prop.maxGridSize[1], \
                                                   prop.maxGridSize[2]);
-
     if(!prop.deviceOverlap)
-        return -1;
+        return 1;
     else
         return 0;
-}
-
-void PFBParameters()
-{
-    printf("%-25s: %d\r\n", "step", step);
-    printf("%-25s: %d\r\n", "out_n", out_n);
-    printf("%-25s: %d\r\n", "stepy", stepy);
-    printf("%-25s: %d\r\n", "groupsx", groupsx);
-    printf("%-25s: %d\r\n", "groupsy", groupsy);
 
 }
 // This func is used for allocating pinned memory on the host computer 
@@ -138,6 +144,7 @@ void GPU_MoveDataToHost(DOUT_TYPE *dout)
 // do PFB
 int GPU_DoPFB()
 {
+
     pfb_fir<<<dimgrid,dimblock>>>(
         (float *)pfbfir_out_gpu,  
         (char*)data_in_gpu,   
@@ -147,7 +154,7 @@ int GPU_DoPFB()
         stepy,
         0,
         0
-        );
+        ); 
     cudaDeviceSynchronize();
     cufftResult fft_ret;
     fft_ret = cufftExecR2C(plan, (cufftReal*)pfbfir_out_gpu, (cufftComplex*) data_out_gpu);
