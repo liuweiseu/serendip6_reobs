@@ -10,6 +10,7 @@ pol=0
 netcpu=5
 gpucpu=6
 outcpu=7
+wfile="/home/wei/serendip6/src/matlab_fir_weights.dat"
 net_thread="s6_fake_net_thread"
 hashpipe -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
@@ -22,6 +23,7 @@ hashpipe -p serendip6 -I $instance   \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
+    -o WEIGHTS=$wfile                  \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread

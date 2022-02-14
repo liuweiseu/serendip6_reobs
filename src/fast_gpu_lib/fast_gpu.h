@@ -2,7 +2,7 @@
 #ifndef _FASTGPU_H
 #define _FASTGPU_H
 
-#define TAPS 4
+#define TAPS 8
  
 struct FFT_RES
 {

@@ -63,9 +63,17 @@ static void *run(hashpipe_thread_args_t * args)
     float *weights;
     weights = (float*) malloc(TAPS*CHANNELS*sizeof(float));
     printf("preparing for weights...\r\n");
-    for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
+    char wfile[100]={0};
+    hgets(st.buf,"WEIGHTS",100,wfile);
+    printf("%s\r\n",wfile);
+    FILE *fp_weights;
+    fp_weights = fopen(wfile,"r");
+    fread(weights,sizeof(float),TAPS*CHANNELS,fp_weights);
+    fclose(fp_weights);
+    //for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
+    
     
     // create cufft plan
     status = GPU_CreateFFTPlan();

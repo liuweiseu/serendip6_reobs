@@ -4,12 +4,10 @@
 #include <stdint.h>
 #include <cufft.h>
 #include "hashpipe_databuf.h"
-//#include "config.h"
 
 #include "fast_gpu_lib/fast_gpu.h"
 
 #define PAGE_SIZE               (4096)
-//#define CACHE_ALIGNMENT         (128)
 #define CACHE_ALIGNMENT         (256)
 // TODO
 // SMOOTH_SCALE, POWER_THRESH, MAXHITS, and MAXGPUHITS should be input parms
@@ -115,8 +113,8 @@ typedef struct s6_input_block_header {
   uint64_t coarse_chan_id;          // coarse channel number of lowest channel in this block
   uint64_t num_coarse_chan;         // number of actual coarse channels (<= N_COARSE_CHAN)
   uint64_t sid;                     // source ID
-  uint64_t time_sec;				// unix time that this block was marked complete
-  uint64_t time_nsec;				// nanoseconds past time_sec
+  uint64_t time_sec;				        // unix time that this block was marked complete
+  uint64_t time_nsec;				        // nanoseconds past time_sec
   uint64_t missed_pkts[N_BORS];     // missed per beam - this block or this run? TODO
 } s6_input_block_header_t;
 
@@ -146,9 +144,9 @@ typedef struct s6_output_block_header {
 #ifdef SOURCE_FAST
   uint64_t sid;                     // source ID, beampol for FAST
 #endif
-  uint64_t time_sec;				// unix time that this block (on the input side) was marked complete
-  uint64_t time_nsec;				// nanoseconds past time_sec
-  uint64_t missed_pkts[N_BORS];    // missed per beam - this block or this run? TODO
+  uint64_t time_sec;				        // unix time that this block (on the input side) was marked complete
+  uint64_t time_nsec;				        // nanoseconds past time_sec
+  uint64_t missed_pkts[N_BORS];     // missed per beam - this block or this run? TODO
   uint64_t nhits[N_BORS];
 } s6_output_block_header_t;
 

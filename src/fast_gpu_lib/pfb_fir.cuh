@@ -202,7 +202,7 @@ __device__ static inline int as_int(float x)
 
 
 #define WGS 4 //128
-#define TAPS 4
+#define TAPS 8
 
 /* Return the byte index in the chunk where the start of your 10-bit sample will
  * be. The sample will be spread over two successive bytes but we just need to
