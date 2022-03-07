@@ -10,7 +10,7 @@ static void str_replace(char *s, char c, char r)
         if(s[i]==c)s[i] = r;
 }
 
-void create_file_name(char *filename)
+void create_rawdata_filename(char *filename)
 {
     // get the current time
     time_t t;
@@ -22,8 +22,18 @@ void create_file_name(char *filename)
     strcat(filename,".dat");
 }
 
-int write_raw_data(char *d, unsigned long long l, FILE *fp)
+int write_rawdata(char *d, unsigned long long l, FILE *fp)
 {
     fwrite(d,l,1,fp);
     return 0;
+}
+
+FILE* open_rawdata_file(char *filename)
+{
+    return fopen(filename,"w");
+}
+
+void close_rawdata_file(FILE *fp)
+{
+    fclose(fp);
 }

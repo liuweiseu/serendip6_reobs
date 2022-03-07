@@ -3,16 +3,9 @@
 
 #include <stdio.h>
 
-void create_file_name(char *filename);
-int write_raw_data(char *d, unsigned long long l,FILE* fp);
+void create_rawdata_filename(char *filename);
+int write_rawdata(char *d, unsigned long long l,FILE* fp);
+FILE* open_rawdata_file(char *filename);
+void close_rawdata_file(FILE *fp);
 
-static inline void openfile(char *filename, FILE *fp)
-{
-    fp = fopen(filename,"w");
-}
-
-static inline void closefile(FILE *fp)
-{
-    fclose(fp);
-}
 #endif
