@@ -54,7 +54,7 @@ static void *run(hashpipe_thread_args_t * args)
         printf("overlaps are supported on the device.\r\n");
     
     // print the PFB parameters out to make sure everything is correct.
-    PFBParameters();  
+    // PFBParameters();  
 
     // Malloc buffer on GPU
     GPU_MallocBuffer();
@@ -69,7 +69,8 @@ static void *run(hashpipe_thread_args_t * args)
     printf("%s\r\n",wfile);
     FILE *fp_weights;
     fp_weights = fopen(wfile,"r");
-    fread(weights,sizeof(float),TAPS*CHANNELS,fp_weights);
+    size_t r = 0;
+    r = fread((float*)weights,sizeof(float),TAPS*CHANNELS,fp_weights);
     fclose(fp_weights);
     //for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");

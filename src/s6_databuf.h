@@ -6,7 +6,7 @@
 #include "hashpipe_databuf.h"
 
 #include "fast_gpu_lib/fast_gpu.h"
-
+#define SOURCE_FAST 1
 #define PAGE_SIZE               (4096)
 #define CACHE_ALIGNMENT         (256)
 // TODO
