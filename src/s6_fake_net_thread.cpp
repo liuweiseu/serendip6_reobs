@@ -42,13 +42,11 @@ static void *run(hashpipe_thread_args_t * args)
                             //  buffers are removed.
     struct timespec time_spec;
 
+    /*
     hashpipe_status_lock_safe(&st);
-    hputi4(st.buf, "NUMCCHAN", N_COARSE_CHAN);
-    hputi4(st.buf, "NUMFCHAN", N_FINE_CHAN);
-    hputi4(st.buf, "NUMBBEAM", N_BYTES_PER_BEAM);
-    hputi4(st.buf, "NUMBBLOC", sizeof(s6_input_block_t));
     hashpipe_status_unlock_safe(&st);
-
+    */
+   
     time_t t, prior_t;
     prior_t = time(&prior_t);
 
