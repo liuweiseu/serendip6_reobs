@@ -11,29 +11,25 @@ static void str_replace(char *s, char c, char r)
         if(s[i]==c)s[i] = r;
 }
 
-void create_rawdata_filename(char *compute_node, char *freq_range, int bm_no, int pol,char* time_now,char *filename)
+void create_rawdata_filename(char *compute_node, char *freq_range, int bm_no, int pol,unsigned long time_sec, unsigned long time_nsec, char *filename)
 {
-    char bm_no_str[4];
-    char pol_str[4];
-    memset(bm_no_str,0,4);
-    memset(pol_str,0,4);
-    sprintf(bm_no_str,"%d",bm_no);
-    sprintf(pol_str,"%d",pol);
-    strcat(filename, "serendip6");       // add "serendip6" to the filename
-    strcat(filename, "_");
-    strcat(filename, compute_node);      // add compute node to the filename
-    strcat(filename, "_");
-    strcat(filename, freq_range);        // add frequency to the filename
-    strcat(filename, "_");
-    strcat(filename, "MB");              // add multi beam symbol to the filename
-    strcat(filename, "_");
-    strcat(filename, bm_no_str);         // add bm number to the filename
-    strcat(filename, "_");
-    strcat(filename, pol_str);           // add pol to the filename
-    strcat(filename, "_");
-    strcat(filename, time_now);          // add current time to the filename 
-    strcat(filename, "_");
-    strcat(filename,"raw.dat");
+    // convert the time 
+    struct tm tm_now;
+    time_t time_now = (time_t)(time_sec);
+    localtime_r(&time_now, &tm_now);
+
+    sprintf(filename,"serendip6_%s_%s_MB_%02d_%02d_%04d%02d%02d_%02d%02d%02d_%09ld_raw.dat",
+                                compute_node,
+                                freq_range,
+                                bm_no,
+                                pol,
+                                tm_now.tm_year+1900,
+                                tm_now.tm_mon+1,
+                                tm_now.tm_mday,
+                                tm_now.tm_hour,
+                                tm_now.tm_min,
+                                tm_now.tm_sec,
+                                time_nsec);
 }
 
 int write_rawdata(char *d, unsigned long long l, FILE *fp)
