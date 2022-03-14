@@ -8,7 +8,8 @@ int main()
 {
     // create file name, based on linux time
     char filename[100];
-    create_rawdata_filename(filename);
+    memset(filename,0,100);
+    create_rawdata_filename("m15","1.05G-1.45G",19,1,"2022-03-11",filename);
     printf("filename: %s\r\n",filename);
     
     // generate fake raw data, all ones
