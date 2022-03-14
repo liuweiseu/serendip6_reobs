@@ -4,6 +4,7 @@
 
 #include "../include/s6_write_raw_data.h"
 
+static FILE *fp;
 static void str_replace(char *s, char c, char r)
 {
     int l = strlen(s);
@@ -32,18 +33,19 @@ void create_rawdata_filename(char *compute_node, char *freq_range, int bm_no, in
                                 time_nsec);
 }
 
-int write_rawdata(char *d, unsigned long long l, FILE *fp)
+int write_rawdata(char *d, unsigned long long l)
 {
     fwrite(d,l,1,fp);
     return 0;
 }
 
-FILE* open_rawdata_file(char *filename)
+int open_rawdata_file(char *filename)
 {
-    return fopen(filename,"w");
+    fp = fopen(filename,"w");
+    return 0;
 }
 
-void close_rawdata_file(FILE *fp)
+void close_rawdata_file()
 {
     fclose(fp);
 }

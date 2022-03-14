@@ -93,6 +93,7 @@
 #define MAXGPUHITS              ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
 #define MAXHITS                 4096
 
+#define FREQ_RANGE              "1.05G-1.45G"
 // The following 3 #define's are needed only by s6_gen_fake_data.
 // Perhaps they should be removed at some point (with a change to
 // s6_gen_fake_data).

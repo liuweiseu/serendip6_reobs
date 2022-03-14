@@ -16,26 +16,40 @@
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
+#include "s6_write_raw_data/include/s6_write_raw_data.h"
 
 #define SET_BIT(val, bitIndex) val |= (1 << bitIndex)
 #define CLEAR_BIT(val, bitIndex) val &= ~(1 << bitIndex)
 #define BIT_IS_SET(val, bitIndex) (val & (1 << bitIndex))
 
-static int write_to_file(s6_output_databuf_t *db, int block_idx)
-{
-    FILE *fp;
-    fp = fopen("test.dat","w");
-    if(fp==NULL)
+static int file_state = 0;
+
+static int write_to_file(s6_output_databuf_t *db, int block_idx, int newfile, char *compute_node, int beam, int pol)
+{   
+    char filename[256] = "\0";
+    if(newfile==1 && file_state == 0)
     {
-        fprintf(stderr, "the file can not be create.");
-        return -1;
+        create_rawdata_filename(compute_node,FREQ_RANGE, beam, pol, 
+                                db->block[block_idx].header.time_sec, 
+                                db->block[block_idx].header.time_nsec, filename);
+        open_rawdata_file(filename);
+        file_state = 1;
     }
-    else
+    else if(newfile == 0 && file_state == 1)
     {
-        fprintf(stderr, "file created.\r\n");
+        close_rawdata_file();
+        file_state = 0;
     }
-    fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
-    fclose(fp);
+    else if(newfile == 1 && file_state == 1)
+    {
+        write_rawdata((char*)&db->block[block_idx].data, N_DATA_BYTES_PER_BLOCK);
+        //fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
+    }
+    else if(newfile ==0 && file_state == 0)
+    {
+        // nothing to do
+    }
+
     return 0;
 }
 static int init(hashpipe_thread_args_t *args)
@@ -79,7 +93,11 @@ static void *run(hashpipe_thread_args_t * args)
     int idle_redis_error = 1; 
     int idle_zero_IFV1BW = 2; 
     size_t num_coarse_chan = 0;
-
+    
+    int newfile = 0;                                    // 1 = create a new file; 0 = keep the current state
+    char compute_node[4] = "\0";                        // compute node  from hashpipe buffer
+    int beam, pol;                                      // get beam and pol from hashpipe buffer
+    
     extern const char *receiver[];
 
     int i, rv=0, debug=20;
@@ -139,10 +157,12 @@ static void *run(hashpipe_thread_args_t * args)
 
         hashpipe_status_unlock_safe(&st);
 
-
-
+        hgeti4(st.buf, "NEWFILE", &newfile);
+        hgets(st.buf,"COMPUTENODE",4,compute_node);
+        hgeti4(st.buf,"FASTBEAM",&beam);
+        hgeti4(st.buf,"FASTPOL", &pol);
         if(testmode || run_always) {
-            rv = write_to_file(db,block_idx);
+            rv = write_to_file(db,block_idx, newfile, compute_node, beam, pol);
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_to_file()");
                 pthread_exit(NULL);

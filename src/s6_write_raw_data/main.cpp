@@ -27,11 +27,10 @@ int main()
     
     // write raw data into file
     FILE *fp;
-    fp = open_rawdata_file(filename);
-    if(fp==NULL) printf("create file error\r\n");
-    write_rawdata(data,1024,fp);
+    open_rawdata_file(filename);
+    write_rawdata(data,1024);
     printf("OK\r\n");
-    close_rawdata_file(fp);
+    close_rawdata_file();
     return 0;
 
 }
