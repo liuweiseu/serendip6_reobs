@@ -107,12 +107,10 @@ static void *run(hashpipe_thread_args_t * args)
 #ifdef SLOW_GEN 
             // Slow : gen fake data (with signals) for all beams, all blocks   
             fprintf(stderr, "slowly generating fake data (sine waves) to block %d beam 0...\n", block_idx);
-            //gen_fake_data(&(db->block[0].data[0])); //modified by Wei
-            //gen_fake_data(&(db->block[0].data[0]));
             clock_gettime(CLOCK_REALTIME, &time_spec);
 		    db->block[block_idx].header.time_sec  = time_spec.tv_sec;
 		    db->block[block_idx].header.time_nsec = time_spec.tv_nsec;
-            gen_fake_data(&(db->block[block_idx].data[0]));
+            gen_fake_data(db->block[block_idx].data);
 #else
 			// Fast : quick and dirty data gen - saw tooth
             fprintf(stderr, "quickly generating fake data (saw tooth) to block 0 beam 0...\n");

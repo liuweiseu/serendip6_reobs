@@ -47,7 +47,11 @@ static void *run(hashpipe_thread_args_t * args)
     
     int status;
     GPU_GetDevInfo();
-    status = GPU_SetDevice(0);
+
+    // get gpu dev from hashpipe buffer
+    int gpudev = 0;
+    hgeti4(st.buf,"GPUDEV", &gpudev);
+    status = GPU_SetDevice(gpudev);
     if(status < 0)
         printf("No device will handle overlaps.\r\n");
     else   
@@ -58,7 +62,6 @@ static void *run(hashpipe_thread_args_t * args)
 
     // Malloc buffer on GPU
     GPU_MallocBuffer();
-
 
     // Preparing weights for PFB FIR
     float *weights;
@@ -75,7 +78,6 @@ static void *run(hashpipe_thread_args_t * args)
     //for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
     printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
-    
     
     // create cufft plan
     status = GPU_CreateFFTPlan();
@@ -163,7 +165,7 @@ static void *run(hashpipe_thread_args_t * args)
         hputs(st.buf, status_key, "processing gpu");
         hashpipe_status_unlock_safe(&st);
 
-        clock_gettime(CLOCK_MONOTONIC, &start);
+        // clock_gettime(CLOCK_MONOTONIC, &start);
 
         // pass input metadata to output
         db_out->block[curblock_out].header.mcnt            = db_in->block[curblock_in].header.mcnt;

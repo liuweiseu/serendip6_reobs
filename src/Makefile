@@ -54,4 +54,4 @@ install-lib:  $(S6_FAST_LIB_TARGET)
 install: install-lib 
 
 .PHONY: all tags clean install install-lib
-# vi: set ts=8 noet :
+
