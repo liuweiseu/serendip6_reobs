@@ -1,0 +1,3 @@
+src/*.dat
+src/s6_write_raw_data/*.dat
+src/s6_redis/*.dat

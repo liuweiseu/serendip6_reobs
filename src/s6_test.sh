@@ -16,16 +16,18 @@ gpucpu=6
 outcpu=7
 wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 net_thread="s6_fake_net_thread"
+compute_node = `hostname`
 echo $net_thread
 echo $wfile
 echo $workdir
+echo $compute_node
 #:<<BLOCK
 hashpipe -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	-o POWTHRSH=40					   \
+	-o POWTHRSH=40					   \ 
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
@@ -33,6 +35,7 @@ hashpipe -p serendip6 -I $instance   \
     -o FASTPOL=$pol                    \
     -o WEIGHTS=$wfile                  \
     -o NEWFILE=0                       \
+    -o COMPUTE_NODE=$compute_node      \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread
