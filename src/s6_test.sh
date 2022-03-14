@@ -16,7 +16,7 @@ gpucpu=6
 outcpu=7
 wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 net_thread="s6_fake_net_thread"
-compute_node = `hostname`
+compute_node=$(hostname)
 echo $net_thread
 echo $wfile
 echo $workdir
