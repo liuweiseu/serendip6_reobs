@@ -16,7 +16,9 @@ S6_FAST_LIB_SOURCES  = 	s6_databuf.cpp \
 		  				s6_gen_fake_data.cpp \
 		  				s6_fake_net_thread.cpp \
 		  				s6_gpu_thread.cpp \
-		  				s6_output_thread.cpp 
+		  				s6_output_thread.cpp \
+						s6_write_raw_data/source/s6_write_raw_data.cpp \
+
 
 S6_FAST_LIB_INCLUDES = s6_databuf.h \
 		  

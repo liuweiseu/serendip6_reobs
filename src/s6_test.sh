@@ -3,8 +3,8 @@
 instance=1
 VERS6SW=0.0.2
 VERS6GW=0.0.2
-iface_pol0=`myinterface.sh voltpol0`
-iface_pol1=`myinterface.sh voltpol1`
+#iface_pol0=`myinterface.sh voltpol0`
+#iface_pol1=`myinterface.sh voltpol1`
 
 workdir=$(cd $(dirname $0); pwd)
 bindhost=${iface_pol0}
@@ -19,7 +19,7 @@ net_thread="s6_fake_net_thread"
 echo $net_thread
 echo $wfile
 echo $workdir
-:<<BLOCK
+#:<<BLOCK
 hashpipe -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
@@ -36,4 +36,4 @@ hashpipe -p serendip6 -I $instance   \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread
-BLOCK
+#BLOCK
