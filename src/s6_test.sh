@@ -32,6 +32,7 @@ hashpipe -p serendip6 -I $instance   \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
     -o WEIGHTS=$wfile                  \
+    -o NEWFILE=0                       \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread

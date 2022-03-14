@@ -33,6 +33,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx, int newfile, ch
                                 db->block[block_idx].header.time_sec, 
                                 db->block[block_idx].header.time_nsec, filename);
         open_rawdata_file(filename);
+        fprintf(stderr, "Filename: %s\r\n", filename);
         file_state = 1;
     }
     else if(newfile == 0 && file_state == 1)

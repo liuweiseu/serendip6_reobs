@@ -40,6 +40,7 @@ static void *run(hashpipe_thread_args_t * args)
                             //  Once data have been generated of an input
                             //  ring buffer, no need to regenerate until
                             //  buffers are removed.
+    struct timespec time_spec;
 
     hashpipe_status_lock_safe(&st);
     //hashpipe_status_lock_safe(p_st);
@@ -108,6 +109,9 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "slowly generating fake data (sine waves) to block %d beam 0...\n", block_idx);
             //gen_fake_data(&(db->block[0].data[0])); //modified by Wei
             //gen_fake_data(&(db->block[0].data[0]));
+            clock_gettime(CLOCK_REALTIME, &time_spec);
+		    db->block[block_idx].header.time_sec  = time_spec.tv_sec;
+		    db->block[block_idx].header.time_nsec = time_spec.tv_nsec;
             gen_fake_data(&(db->block[block_idx].data[0]));
 #else
 			// Fast : quick and dirty data gen - saw tooth
