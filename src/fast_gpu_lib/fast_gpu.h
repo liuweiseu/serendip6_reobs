@@ -7,7 +7,7 @@
 #define DIN_TYPE    char
 #define DOUT_TYPE   float //struct FFT_RES
 
-#define CHANNELS    65536
+#define CHANNELS    32768 //65536
 #define SPECTRA     4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 

@@ -31,6 +31,18 @@
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
+static int init(hashpipe_thread_args_t *args)
+{
+    /*
+    hashpipe_status_t st = args->st;
+    hashpipe_status_lock_safe(&st);
+    hashpipe_status_unlock_safe(&st);
+    */
+    
+    // Success!
+    return 0;
+}
+
 static void *run(hashpipe_thread_args_t * args)
 {
     
@@ -40,25 +52,28 @@ static void *run(hashpipe_thread_args_t * args)
     hashpipe_status_t st = args->st;
     const char * status_key = args->thread_desc->skey;
 
-    /*
+    int rv, status;
+    int curblock_in=0;
+    int curblock_out=0;
+
+     /*
     * The following is about GPU init
     */
     // Check gpu status
-    
-    int status;
-    GPU_GetDevInfo();
+    //int status;
+    //GPU_GetDevInfo();
 
     // get gpu dev from hashpipe buffer
     int gpudev = 0;
     hgeti4(st.buf,"GPUDEV", &gpudev);
     status = GPU_SetDevice(gpudev);
+    
+    /*
     if(status < 0)
         printf("No device will handle overlaps.\r\n");
     else   
         printf("overlaps are supported on the device.\r\n");
-    
-    // print the PFB parameters out to make sure everything is correct.
-    // PFBParameters();  
+    */
 
     // Malloc buffer on GPU
     GPU_MallocBuffer();
@@ -89,24 +104,8 @@ static void *run(hashpipe_thread_args_t * args)
     else
         printf("The cuFFT plan is created successfully!\r\n");
 
-    int rv;
-    uint64_t start_mcount, last_mcount=0;
-    int curblock_in=0;
-    int curblock_out=0;
-    int error_count = 0, max_error_count = 0;
-    float error, max_error = 0.0;
-
     struct timespec start, stop;
     uint64_t elapsed_gpu_ns  = 0;
-    uint64_t gpu_block_count = 0;
-
-    // init s6GPU
-    int gpu_dev=0;          			// default to 0
-    int maxhits = MAXHITS; 				// default
-	float power_thresh = POWER_THRESH;	// default
-    hashpipe_status_lock_safe(&st);
-    hgeti4(st.buf, "GPUDEV", &gpu_dev);
-    hashpipe_status_unlock_safe(&st);
 
 	/*
     char gpu_sem_name[256];
@@ -115,8 +114,6 @@ static void *run(hashpipe_thread_args_t * args)
 	gpu_sem = sem_open(gpu_sem_name, O_CREAT, S_IRWXU, 1);
 	*/
     
-    uint64_t num_coarse_chan = N_COARSE_CHAN;
-
     while (run_threads()) {
 
         hashpipe_status_lock_safe(&st);
@@ -144,28 +141,25 @@ static void *run(hashpipe_thread_args_t * args)
         hputu8(st.buf, "GPUMCNT", db_in->block[curblock_in].header.mcnt);
         hashpipe_status_unlock_safe(&st);
 
-        if(db_in->block[curblock_in].header.mcnt >= last_mcount) {
-          // Wait for new output block to be free
-          while ((rv=s6_output_databuf_wait_free(db_out, curblock_out)) != HASHPIPE_OK) {
-              if (rv==HASHPIPE_TIMEOUT) {
-                  hashpipe_status_lock_safe(&st);
-                  hputs(st.buf, status_key, "blocked gpu out");
-                  hashpipe_status_unlock_safe(&st);
-                  continue;
-              } else {
-                  hashpipe_error(__FUNCTION__, "error waiting for free databuf");
-                  pthread_exit(NULL);
-                  break;
-              }
-          }
+        
+        // Wait for new output block to be free
+        while ((rv=s6_output_databuf_wait_free(db_out, curblock_out)) != HASHPIPE_OK) {
+            if (rv==HASHPIPE_TIMEOUT) {
+                hashpipe_status_lock_safe(&st);
+                hputs(st.buf, status_key, "blocked gpu out");
+                hashpipe_status_unlock_safe(&st);
+                continue;
+            } else {
+                hashpipe_error(__FUNCTION__, "error waiting for free databuf");
+                pthread_exit(NULL);
+                break;
+            }
         }
 
         // Note processing status
         hashpipe_status_lock_safe(&st);
         hputs(st.buf, status_key, "processing gpu");
         hashpipe_status_unlock_safe(&st);
-
-        // clock_gettime(CLOCK_MONOTONIC, &start);
 
         // pass input metadata to output
         db_out->block[curblock_out].header.mcnt            = db_in->block[curblock_in].header.mcnt;
@@ -191,13 +185,6 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "PFB Success!\r\n");
         }        
         GPU_MoveDataToHost(db_out->block[curblock_out].data);
-        /*
-        hashpipe_status_lock_safe(&st);
-        hputr4(st.buf, "GPUMXERR", max_error);
-        hputi4(st.buf, "GPUERCNT", error_count);
-        hputi4(st.buf, "GPUMXECT", max_error_count);
-        hashpipe_status_unlock_safe(&st);
-        */
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
@@ -216,7 +203,7 @@ static void *run(hashpipe_thread_args_t * args)
 static hashpipe_thread_desc_t gpu_thread = {
     name: "s6_gpu_thread",
     skey: "GPUSTAT",
-    init: NULL,
+    init: init,
     run:  run,
     ibuf_desc: {s6_input_databuf_create},
     obuf_desc: {s6_output_databuf_create}

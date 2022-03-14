@@ -43,15 +43,11 @@ static void *run(hashpipe_thread_args_t * args)
     struct timespec time_spec;
 
     hashpipe_status_lock_safe(&st);
-    //hashpipe_status_lock_safe(p_st);
     hputi4(st.buf, "NUMCCHAN", N_COARSE_CHAN);
     hputi4(st.buf, "NUMFCHAN", N_FINE_CHAN);
     hputi4(st.buf, "NUMBBEAM", N_BYTES_PER_BEAM);
     hputi4(st.buf, "NUMBBLOC", sizeof(s6_input_block_t));
-    hputi4(st.buf, "THRESHLD", POWER_THRESH);
-    //hgeti4(st.buf, "GENFAKE", &gen_fake);
     hashpipe_status_unlock_safe(&st);
-    //hashpipe_status_unlock_safe(p_st);
 
     time_t t, prior_t;
     prior_t = time(&prior_t);
@@ -64,10 +60,11 @@ static void *run(hashpipe_thread_args_t * args)
         hputs(st.buf, status_key, "waiting");
         hashpipe_status_unlock_safe(&st);
         //hashpipe_status_unlock_safe(p_st);
- 
+
         t = time(&t);
         fprintf(stderr, "elapsed seconds for block %d : %ld\n", block_idx, t - prior_t);
         prior_t = t;
+
         // Wait for data
         struct timespec sleep_dur, rem_sleep_dur;
         sleep_dur.tv_sec = 1;
@@ -106,7 +103,9 @@ static void *run(hashpipe_thread_args_t * args)
 #define SLOW_GEN
 #ifdef SLOW_GEN 
             // Slow : gen fake data (with signals) for all beams, all blocks   
+            /*
             fprintf(stderr, "slowly generating fake data (sine waves) to block %d beam 0...\n", block_idx);
+            */
             clock_gettime(CLOCK_REALTIME, &time_spec);
 		    db->block[block_idx].header.time_sec  = time_spec.tv_sec;
 		    db->block[block_idx].header.time_nsec = time_spec.tv_nsec;
@@ -121,13 +120,12 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "done generating fake data to block %d beam 0\n",block_idx);
         }
 
-        hashpipe_status_lock_safe(&st);
+        // We can add some code here for getting status from hashpipe buffer
         /*
-        hputr4(st.buf, "NETMXERR", max_error);
-        hputi4(st.buf, "NETERCNT", error_count);
-        hputi4(st.buf, "NETMXECT", max_error_count);
-        */
+        hashpipe_status_lock_safe(&st);
+
         hashpipe_status_unlock_safe(&st);
+        */
 
         // Mark block as full
         s6_input_databuf_set_filled(db, block_idx);

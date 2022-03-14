@@ -55,12 +55,11 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx, int newfile, ch
 }
 static int init(hashpipe_thread_args_t *args)
 {
+    // Actually, we did nothing here
     hashpipe_status_t st = args->st;
 
     hashpipe_status_lock_safe(&st);
-    //hputr4(st.buf, "CGOMXERR", 0.0);
-    //hputi4(st.buf, "CGOERCNT", 0);
-    //hputi4(st.buf, "CGOMXECT", 0);
+
     hashpipe_status_unlock_safe(&st);
 
     // Success!
@@ -74,41 +73,17 @@ static void *run(hashpipe_thread_args_t * args)
     s6_output_databuf_t *db = (s6_output_databuf_t *)args->ibuf;
     hashpipe_status_t st = args->st;
     const char * status_key = args->thread_desc->skey;
-
-// TODO all of the SOURCE_FAST sections are copies of SOURCE_DIBAS sections as place holders.
-    char *prior_receiver = (char *)malloc(32);
  
 
-    int run_always, prior_run_always=0;                 // 1 = run even if no receiver
-
-    int idle=0;                                         // 1 = idle output, 0 = good to go
-    uint32_t idle_flag=0;                               // bit field for data driven idle conditions    
-    int testmode=1;                                     // modified by Wei on 12/30/2021. Let's make it work on testmode
-                                                        // 1 = write output file regardless of other
-                                                        //   flags and do not attempt to obtain observatory
-                                                        //   status data (in fact, write zeros to the obs
-                                                        //   status structure).  0 = operate normally and
-                                                        //   respect other flags.
-
-                                                        // data driven idle bit indexes
-    int idle_redis_error = 1; 
-    int idle_zero_IFV1BW = 2; 
-    size_t num_coarse_chan = 0;
+    int run_always = 0;                                 // 1 = run even if no receiver
     
     int newfile = 0;                                    // 1 = create a new file; 0 = keep the current state
-    char compute_node[4] = "\0";                        // compute node  from hashpipe buffer
+    char compute_node[16] = "\0";                        // compute node  from hashpipe buffer
     int beam, pol;                                      // get beam and pol from hashpipe buffer
-    
-    extern const char *receiver[];
 
-    int i, rv=0, debug=20;
+    int i, rv=0;
     int block_idx=0;
-    int error_count, max_error_count = 0;
-    float error, max_error = 0.0;
 	time_t time_start, runsecs;
-
-    char current_filename[200] = "\0";  // init as a null string
-
 
 	time_start = time(NULL);
 
@@ -137,32 +112,22 @@ static void *run(hashpipe_thread_args_t * args)
                 break;
             }
         }
-
+        printf("get data\r\n");
         hashpipe_status_lock_safe(&st);
         hputs(st.buf, status_key, "processing");
         hashpipe_status_unlock_safe(&st);
-        // TODO check mcnt
-
-		// time stamp for this block of hits
-
-        hgeti4(st.buf, "IDLE", &idle);
-        hgeti4(st.buf, "TESTMODE", &testmode);
-
-    // Start idle checking
-    // generic redis error check. 
-
-        hputi4(st.buf, "IDLE", idle);   // finally, make our idle condition live
-    // End idle checking
-
+        
+        /*
         hashpipe_status_lock_safe(&st);
 
         hashpipe_status_unlock_safe(&st);
+        */
 
         hgeti4(st.buf, "NEWFILE", &newfile);
-        hgets(st.buf,"COMPUTENODE",4,compute_node);
+        hgets(st.buf,"COMPUTE_NODE",16,compute_node);
         hgeti4(st.buf,"FASTBEAM",&beam);
         hgeti4(st.buf,"FASTPOL", &pol);
-        if(testmode || run_always) {
+        if(run_always) {
             rv = write_to_file(db,block_idx, newfile, compute_node, beam, pol);
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_to_file()");
@@ -170,13 +135,11 @@ static void *run(hashpipe_thread_args_t * args)
             }
         }
 
+        /*
         hashpipe_status_lock_safe(&st);
-        // TODO error counts not yet implemented
-        hputr4(st.buf, "OUTMXERR", max_error);
-        hputi4(st.buf, "OUTERCNT", error_count);
-        hputi4(st.buf, "OUTMXECT", max_error_count);
-        // put a few selected coarse channel powers to the status buffer
+
         hashpipe_status_unlock_safe(&st);
+        */
 
         // Mark block as free
         memset((void *)&db->block[block_idx], 0, sizeof(s6_output_block_t));   

@@ -54,6 +54,7 @@ int GPU_SetDevice(int gpu_dev)
     int deviceID;
     cudaGetDevice(&deviceID);
     cudaGetDeviceProperties(&prop, deviceID);
+    /*
     printf("The selected GPU Device Info:\r\n");
     printf("%-25s: %d\r\n", "MaxThreadsPerBlock", prop.maxThreadsPerBlock);
     printf("%-25s: %d %d %d\r\n","maxThreadsDim", prop.maxThreadsDim[0], \
@@ -62,11 +63,13 @@ int GPU_SetDevice(int gpu_dev)
     printf("%-25s: %d %d %d\r\n","maxGridSize",   prop.maxGridSize[0], \
                                                   prop.maxGridSize[1], \
                                                   prop.maxGridSize[2]);
+    
     if(!prop.deviceOverlap)
         return 1;
     else
         return 0;
-
+    */
+   return 0;
 }
 // This func is used for allocating pinned memory on the host computer 
 //int Host_MallocBuffer(DIN_TYPE *buf_in, DOUT_TYPE *buf_out)
