@@ -184,7 +184,7 @@ static void *run(hashpipe_thread_args_t * args)
         {
             fprintf(stderr, "PFB Success!\r\n");
         }        
-        GPU_MoveDataToHost(db_out->block[curblock_out].data);
+        GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;

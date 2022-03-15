@@ -22,8 +22,8 @@
 #define CLEAR_BIT(val, bitIndex) val &= ~(1 << bitIndex)
 #define BIT_IS_SET(val, bitIndex) (val & (1 << bitIndex))
 
+// write data into data file
 static int file_state = 0;
-
 static int write_to_file(s6_output_databuf_t *db, int block_idx, 
                         int newfile, char *compute_node,char*freq_range, 
                         int beam, int pol)
@@ -45,7 +45,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
     }
     else if(newfile == 1 && file_state == 1)
     {
-        write_rawdata((char*)&db->block[block_idx].data, N_DATA_BYTES_PER_BLOCK);
+        write_rawdata((char*)&db->block[block_idx].data, N_DATA_BYTES_PER_OUT_BLOCK);
         //fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
     }
     else if(newfile ==0 && file_state == 0)
@@ -55,6 +55,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
 
     return 0;
 }
+
 static int init(hashpipe_thread_args_t *args)
 {
     // Actually, we did nothing here

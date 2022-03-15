@@ -3,7 +3,12 @@
 #define _CUDAPFB_H
 
 #define TAPS 4
- 
+
+typedef struct FFT_RES {
+    float re;
+    float im;
+}FFT_RES;
+
 #define DIN_TYPE    char
 #define DOUT_TYPE   float //struct FFT_RES
 
@@ -14,7 +19,7 @@
 #define START_BIN   0
 #define STOP_BIN    255
 #define CH_PER_SPEC (STOP_BIN - START_BIN + 1)
-#define OUTPUT_LEN  SPECTRA * CH_PER_SPEC
+#define OUTPUT_LEN  SPECTRA * CH_PER_SPEC * 2 // multiplying 2 is for re and im parts
 
 void GPU_GetDevInfo();
 int GPU_SetDevice(int gpu_dev);
@@ -23,7 +28,7 @@ void GPU_MallocBuffer();
 int GPU_CreateFFTPlan();
 void GPU_MoveWeightsFromHost(float *weights);
 void GPU_MoveDataFromHost(DIN_TYPE *din);
-void GPU_MoveDataToHost(DOUT_TYPE *dout);
+void GPU_MoveDataToHost(FFT_RES *dout);
 int GPU_DoPFB();
 void GPU_DestroyPlan();
 void Host_FreeBuffer(DIN_TYPE *buf_in, DOUT_TYPE *buf_out);

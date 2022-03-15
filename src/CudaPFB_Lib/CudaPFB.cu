@@ -129,7 +129,7 @@ void GPU_MoveDataFromHost(DIN_TYPE *din)
 }
 
 // move data from GPU to host
-void GPU_MoveDataToHost(DOUT_TYPE *dout)
+void GPU_MoveDataToHost(FFT_RES *dout)
 {
 //#pragma unroll 
     for(int i = 0; i < SPECTRA; i++)
@@ -138,10 +138,14 @@ void GPU_MoveDataToHost(DOUT_TYPE *dout)
                    data_out_gpu + i * CHANNELS + START_BIN, 
                    OUTPUT_LEN * sizeof(cufftComplex), 
                    cudaMemcpyDeviceToHost);
-    for(int i = 0; i < OUTPUT_LEN; i++)
-        dout[i] = data_out_host[i].x * data_out_host[i].x + \
+    for(int i = 0; i < OUTPUT_LEN/2; i++)
+    {
+        //dout[i] = data_out_host[i].x * data_out_host[i].x + \
                   data_out_host[i].y * data_out_host[i].y;
-
+        dout[i].re = (float)data_out_host[i].x;
+        dout[i].im = (float)data_out_host[i].y;
+    }
+    
 }
 
 // do PFB

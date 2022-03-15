@@ -93,6 +93,8 @@
 #define MAXGPUHITS              ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
 #define MAXHITS                 4096
 
+#define N_BYTES_PER_OUT_SAMPLE  sizeof(float)
+#define N_DATA_BYTES_PER_OUT_BLOCK OUTLEN * N_BYTES_PER_OUT_SAMPLE
 //#define FREQ_RANGE              "1.05G-1.45G"
 // The following 3 #define's are needed only by s6_gen_fake_data.
 // Perhaps they should be removed at some point (with a change to
@@ -158,7 +160,7 @@ typedef uint8_t s6_output_header_cache_alignment[
 typedef struct s6_output_block {
   s6_output_block_header_t header;
   s6_output_header_cache_alignment padding; // Maintain cache alignment
-  float data[(OUTPUT_LEN)]; //modified by Wei on 02/04/2024. The output data is float
+  float data[(OUTPUT_LEN)]; 
 } s6_output_block_t;
 
 typedef struct s6_output_databuf {
