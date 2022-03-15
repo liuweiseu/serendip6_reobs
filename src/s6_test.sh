@@ -1,6 +1,6 @@
 #!/bin/bash
 
-instance=1
+instance=0
 VERS6SW=0.0.2
 VERS6GW=0.0.2
 #iface_pol0=`myinterface.sh voltpol0`

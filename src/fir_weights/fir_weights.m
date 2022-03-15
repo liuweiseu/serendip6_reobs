@@ -2,10 +2,10 @@ clear;
 clc;
 close all;
 
-N = 65536;
-TAPS = 8;
+N = 32768;
+TAPS = 4;
 fs = 1024;
-f= fs/N*4;
+f= fs/N;
 
 wn = f*2/fs;
 ft = 'LOW';
