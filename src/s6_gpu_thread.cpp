@@ -31,6 +31,65 @@
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
+
+// cal rms
+static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
+{
+    int N = OUTPUT_LEN/2;
+    float sum_p_re = 0, sum_p_im = 0;
+    float sum_re = 0, sum_im = 0;
+    max->re = 0;
+    max->im = 0;
+    for(int i = 0; i < N; i++)
+    {
+        sum_p_re += d[i].re * d[i].re;
+        sum_p_im += d[i].im * d[i].im;
+        sum_re += d[i].re;
+        sum_im += d[i].im;
+        if(abs(d[i].re) > max->re)
+            max->re = abs(d[i].re);
+        if(abs(d[i].im) > max->im)
+            max->im = abs(d[i].im);
+    }
+    rms->re = sqrt(sum_p_re / N);
+    rms->im = sqrt(sum_p_im / N);
+    average->re = sum_re / N;
+    average->im = sum_im / N;
+}
+
+// adjust gain of output data
+static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, char *dout)
+{
+    int N = OUTPUT_LEN/2;
+    int tmp0 = 0, tmp1 = 0;
+    if(abs(average->re - rms->re) > abs(average->re + rms->re)) 
+        tmp0 = abs(average->re - rms->re);
+    else
+        tmp0 = abs(average->re + rms->re);
+    
+    if(abs(average->im - rms->im) > abs(average->im + rms->im)) 
+        tmp1 = abs(average->im - rms->im);
+    else
+        tmp1 = abs(average->im + rms->im);
+    
+    for(int i = 0; i < N; i++)
+    {
+        if(din[i].re < -tmp0)
+            dout[2*i] = -127;
+        else if(din[i].re > tmp0)
+            dout[2*i] = 127;
+        else
+            dout[2*i] = (char)(din[i].re/tmp0*127);
+
+        if(din[i].im < -tmp1)
+            dout[2*i+1] = -127;
+        else if(din[i].im > tmp1)
+            dout[2*i+1] = 127;
+        else
+            dout[2*i+1] = (char)(din[i].im/tmp1*127);
+    }
+}
+
 static int init(hashpipe_thread_args_t *args)
 {
     /*
@@ -56,6 +115,9 @@ static void *run(hashpipe_thread_args_t * args)
     int curblock_in=0;
     int curblock_out=0;
 
+    FFT_RES rms;                                        // rms of re and im
+    FFT_RES average;                                    // average of re and im
+    FFT_RES *data_p = (FFT_RES*) malloc(N_DATA_BYTES_PER_OUT_BLOCK);
      /*
     * The following is about GPU init
     */
@@ -184,7 +246,15 @@ static void *run(hashpipe_thread_args_t * args)
         {
             fprintf(stderr, "PFB Success!\r\n");
         }        
-        GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
+        //GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
+        GPU_MoveDataToHost(data_p);
+        cal_rms(data_p, &rms, &average);
+        adj_gain(data_p, &rms, &average, db_out->block[curblock_out].data);
+        
+        hputr4(st.buf, "R_RE", rms.re);
+        hputr4(st.buf, "R_IM", rms.im);
+        hputr4(st.buf, "A_RE", average.re);
+        hputr4(st.buf, "A_IM", average.im);
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
@@ -195,7 +265,9 @@ static void *run(hashpipe_thread_args_t * args)
         /* Check for cancel */
         pthread_testcancel();
     }
-
+    GPU_DestroyPlan();
+    GPU_FreeBuffer();
+    free(data_p);
 	//sem_unlink(gpu_sem_name);
     return NULL;
 }

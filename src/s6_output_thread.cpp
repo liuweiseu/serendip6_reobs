@@ -56,6 +56,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
     return 0;
 }
 
+
 static int init(hashpipe_thread_args_t *args)
 {
     // Actually, we did nothing here
@@ -82,7 +83,7 @@ static void *run(hashpipe_thread_args_t * args)
     
     int newfile = 0;                                    // 1 = create a new file; 0 = keep the current state
     char compute_node[16] = "\0";                       // compute node  from hashpipe buffer
-    char freq_range[16] = "\0";                             // get freq_range from hashpipe buffer
+    char freq_range[16] = "\0";                         // get freq_range from hashpipe buffer
     int beam, pol;                                      // get beam and pol from hashpipe buffer
 
     int i, rv=0;
@@ -156,7 +157,6 @@ static void *run(hashpipe_thread_args_t * args)
         /* Will exit if thread has been cancelled */
         pthread_testcancel();
     }
-
     return NULL;
 }
 
