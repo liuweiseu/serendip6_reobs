@@ -26,7 +26,7 @@
 #include "hashpipe.h"
 #include "s6_databuf.h"
 //#include "s6GPU.h"
-#include "fast_gpu_lib/fast_gpu.h"
+#include "CudaPFB_Lib/CudaPFB.h"
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
@@ -81,17 +81,17 @@ static void *run(hashpipe_thread_args_t * args)
     // Preparing weights for PFB FIR
     float *weights;
     weights = (float*) malloc(TAPS*CHANNELS*sizeof(float));
-    printf("preparing for weights...\r\n");
+    //printf("preparing for weights...\r\n");
     char wfile[100]={0};
     hgets(st.buf,"WEIGHTS",100,wfile);
-    printf("%s\r\n",wfile);
+    //printf("%s\r\n",wfile);
     FILE *fp_weights;
     fp_weights = fopen(wfile,"r");
     size_t r = 0;
     r = fread((float*)weights,sizeof(float),TAPS*CHANNELS,fp_weights);
     fclose(fp_weights);
     //for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
-    printf("weights ready.\r\n");
+    //printf("weights ready.\r\n");
     GPU_MoveWeightsFromHost(weights);
     
     // create cufft plan

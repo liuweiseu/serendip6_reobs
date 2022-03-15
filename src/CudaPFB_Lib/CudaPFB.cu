@@ -8,7 +8,7 @@ We will compile the code as a .so, and then link the code in the hashpipe code.
 #include "cuda.h"
 
 //extern "C" {
-#include "fast_gpu.h"
+#include "CudaPFB.h"
 // This is the PFB FIR code from James
 #include "pfb_fir.cuh"
 

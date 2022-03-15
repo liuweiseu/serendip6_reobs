@@ -8,6 +8,7 @@ VERS6GW=0.0.2
 
 workdir=$(cd $(dirname $0); pwd)
 bindhost=${iface_pol0}
+freq_range="1.05G-1.45G"
 gpudev=0
 beam=1
 pol=0
@@ -18,10 +19,7 @@ wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 net_thread="s6_fake_net_thread"
 compute_node=$(hostname)
 echo $net_thread
-echo $wfile
-echo $workdir
-echo $compute_node
-#:<<BLOCK
+
 hashpipe -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
@@ -34,7 +32,7 @@ hashpipe -p serendip6 -I $instance   \
     -o WEIGHTS=$wfile                  \
     -o NEWFILE=0                       \
     -o COMPUTE_NODE=$compute_node      \
+    -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread
-#BLOCK

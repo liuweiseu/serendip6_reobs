@@ -24,12 +24,14 @@
 
 static int file_state = 0;
 
-static int write_to_file(s6_output_databuf_t *db, int block_idx, int newfile, char *compute_node, int beam, int pol)
+static int write_to_file(s6_output_databuf_t *db, int block_idx, 
+                        int newfile, char *compute_node,char*freq_range, 
+                        int beam, int pol)
 {   
     char filename[256] = "\0";
     if(newfile==1 && file_state == 0)
     {
-        create_rawdata_filename(compute_node,FREQ_RANGE, beam, pol, 
+        create_rawdata_filename(compute_node,freq_range, beam, pol, 
                                 db->block[block_idx].header.time_sec, 
                                 db->block[block_idx].header.time_nsec, filename);
         open_rawdata_file(filename);
@@ -78,7 +80,8 @@ static void *run(hashpipe_thread_args_t * args)
     int run_always = 0;                                 // 1 = run even if no receiver
     
     int newfile = 0;                                    // 1 = create a new file; 0 = keep the current state
-    char compute_node[16] = "\0";                        // compute node  from hashpipe buffer
+    char compute_node[16] = "\0";                       // compute node  from hashpipe buffer
+    char freq_range[16] = "\0";                             // get freq_range from hashpipe buffer
     int beam, pol;                                      // get beam and pol from hashpipe buffer
 
     int i, rv=0;
@@ -125,10 +128,11 @@ static void *run(hashpipe_thread_args_t * args)
 
         hgeti4(st.buf, "NEWFILE", &newfile);
         hgets(st.buf,"COMPUTE_NODE",16,compute_node);
+        hgets(st.buf,"FREQ",16,freq_range);
         hgeti4(st.buf,"FASTBEAM",&beam);
         hgeti4(st.buf,"FASTPOL", &pol);
         if(run_always) {
-            rv = write_to_file(db,block_idx, newfile, compute_node, beam, pol);
+            rv = write_to_file(db,block_idx, newfile, compute_node,freq_range, beam, pol);
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_to_file()");
                 pthread_exit(NULL);

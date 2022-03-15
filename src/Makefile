@@ -8,7 +8,7 @@ S6_LOCATION = "-D SOURCE_FAST"
 S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I/usr/local/cuda/include -I. \
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis \
-		     -lhashpipe -lrt -lm -lfastgpu -std=c++14\
+		     -lhashpipe -lrt -lm -lcudapfb -std=c++14\
 
 S6_FAST_LIB_TARGET   = 	serendip6.so
 S6_FAST_LIB_SOURCES  = 	s6_databuf.cpp \
@@ -22,7 +22,7 @@ S6_FAST_LIB_SOURCES  = 	s6_databuf.cpp \
 
 S6_FAST_LIB_INCLUDES = s6_databuf.h \
 		  
-SUB_DIR = fast_gpu_lib
+SUB_DIR = CudaPFB_Lib
 
 all_fast: $(S6_FAST_LIB_TARGET) ${SUB_DIR}
 

@@ -1,6 +1,6 @@
 /* fast_gpu.h */
-#ifndef _FASTGPU_H
-#define _FASTGPU_H
+#ifndef _CUDAPFB_H
+#define _CUDAPFB_H
 
 #define TAPS 4
  

@@ -1,10 +1,10 @@
 NVCC	= nvcc
 
-TARGET  = libfastgpu.so
+TARGET  = libcudapfb.so
 
 INC 	= pfb_fir.cuh \
-		  fast_gpu.h
-SRC		= fast_gpu.cu
+		  CudaPFB.h
+SRC		= CudaPFB.cu
 
 NVCCFLAG  = -Xcompiler -fPIC --shared \
 			-I/usr/local/cuda/include \
