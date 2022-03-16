@@ -58,9 +58,10 @@ static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
 }
 
 // adjust gain of output data
-static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, char *dout)
+static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max, char *dout)
 {
     int N = OUTPUT_LEN/2;
+    /*
     int tmp0 = 0, tmp1 = 0;
     if(abs(average->re - rms->re) > abs(average->re + rms->re)) 
         tmp0 = abs(average->re - rms->re);
@@ -87,6 +88,18 @@ static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, char *dout)
             dout[2*i+1] = 127;
         else
             dout[2*i+1] = (char)(din[i].im/tmp1*127);
+    }
+    */
+    float tmp;
+    if(abs(max->re) > abs(max->im))
+        tmp = abs(max->re);
+    else
+        tmp = abs(max->im);
+    
+    for(int i = 0; i < N; i++)
+    {
+        dout[2*i] = din[i].re/tmp*127;
+        dout[2*i+1] = din[i].im/tmp*127;
     }
 }
 
@@ -117,6 +130,7 @@ static void *run(hashpipe_thread_args_t * args)
 
     FFT_RES rms;                                        // rms of re and im
     FFT_RES average;                                    // average of re and im
+    FFT_RES max;                                        // max value of re and im
     FFT_RES *data_p = (FFT_RES*) malloc(N_DATA_BYTES_PER_OUT_BLOCK);
      /*
     * The following is about GPU init
@@ -247,10 +261,14 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "PFB Success!\r\n");
         }        
         //GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
-        GPU_MoveDataToHost(data_p);
-        cal_rms(data_p, &rms, &average);
-        adj_gain(data_p, &rms, &average, db_out->block[curblock_out].data);
         
+        GPU_MoveDataToHost(data_p);
+        cal_rms(data_p, &rms, &average, &max);
+        adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
+        
+
+        hputr4(st.buf, "M_RE", max.re);
+        hputr4(st.buf, "M_IM", max.im);
         hputr4(st.buf, "R_RE", rms.re);
         hputr4(st.buf, "R_IM", rms.im);
         hputr4(st.buf, "A_RE", average.re);
