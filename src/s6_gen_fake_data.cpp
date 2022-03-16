@@ -76,7 +76,6 @@ void gen_time_series(int input_i, std::vector<char> &h_raw_timeseries) {
 }
 
 
-/*
 // -----------------------------------------------------------------------------
 void gen_fake_data(uint64_t *data) {
 // data points to the input buffer
@@ -117,7 +116,8 @@ void gen_fake_data(uint64_t *data) {
         }
     }
 }
-*/
+
+/*
 void gen_fake_data(uint64_t *data) {
     int i = 0;
    float fs = 1024;
@@ -128,3 +128,4 @@ void gen_fake_data(uint64_t *data) {
        *(((char*)data)+t) = (char)res;
    }
 }
+*/

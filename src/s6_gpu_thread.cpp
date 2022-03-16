@@ -31,7 +31,7 @@
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
 
-
+#define SIN_WAVE 1
 // cal rms
 static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
 {
@@ -61,7 +61,7 @@ static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
 static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max, char *dout)
 {
     int N = OUTPUT_LEN/2;
-    /*
+#ifndef SIN_WAVE
     int tmp0 = 0, tmp1 = 0;
     if(abs(average->re - rms->re) > abs(average->re + rms->re)) 
         tmp0 = abs(average->re - rms->re);
@@ -89,7 +89,7 @@ static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max,
         else
             dout[2*i+1] = (char)(din[i].im/tmp1*127);
     }
-    */
+#else
     float tmp;
     if(abs(max->re) > abs(max->im))
         tmp = abs(max->re);
@@ -101,6 +101,7 @@ static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max,
         dout[2*i] = din[i].re/tmp*127;
         dout[2*i+1] = din[i].im/tmp*127;
     }
+#endif
 }
 
 static int init(hashpipe_thread_args_t *args)
