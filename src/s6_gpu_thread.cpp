@@ -104,6 +104,18 @@ static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max,
 #endif
 }
 
+static void adj_gain_static(FFT_RES *din, float gain, char *dout)
+{
+    int N = OUTPUT_LEN/2;
+    int tmp = 0;
+    for(int i = 0; i < N; i ++)
+    {
+        tmp = (int)(din[i].re * gain);
+        dout[2*i] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+        tmp = (int)(din[i].im * gain);
+        dout[2*i+1] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+    } 
+}
 static int init(hashpipe_thread_args_t *args)
 {
     /*
@@ -133,6 +145,7 @@ static void *run(hashpipe_thread_args_t * args)
     FFT_RES average;                                    // average of re and im
     FFT_RES max;                                        // max value of re and im
     FFT_RES *data_p = (FFT_RES*) malloc(N_DATA_BYTES_PER_OUT_BLOCK);
+    float gain = 0;
      /*
     * The following is about GPU init
     */
@@ -198,7 +211,7 @@ static void *run(hashpipe_thread_args_t * args)
         hputs(st.buf, status_key, "waiting");
         hputi4(st.buf, "GPUBKOUT", curblock_out);
         hashpipe_status_unlock_safe(&st);
-
+        hgetr4(st.buf,"GAIN",&gain);
         // Wait for new input block to be filled
         while ((rv=hashpipe_databuf_wait_filled((hashpipe_databuf_t *)db_in, curblock_in)) != HASHPIPE_OK) {
             if (rv==HASHPIPE_TIMEOUT) {
@@ -265,8 +278,8 @@ static void *run(hashpipe_thread_args_t * args)
         
         GPU_MoveDataToHost(data_p);
         cal_rms(data_p, &rms, &average, &max);
-        adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
-        
+        //adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
+        adj_gain_static(data_p, gain, db_out->block[curblock_out].data);
 
         hputr4(st.buf, "M_RE", max.re);
         hputr4(st.buf, "M_IM", max.im);

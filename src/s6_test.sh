@@ -15,12 +15,13 @@ pol=0
 netcpu=5
 gpucpu=6
 outcpu=7
+gain=1.0
 wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 net_thread="s6_fake_net_thread"
 compute_node=$(hostname)
 echo $net_thread
 
-hashpipe -p serendip6 -I $instance   \
+hashpipe -p ./serendip6.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
@@ -31,6 +32,7 @@ hashpipe -p serendip6 -I $instance   \
     -o FASTPOL=$pol                    \
     -o WEIGHTS=$wfile                  \
     -o NEWFILE=0                       \
+    -o GAIN=$gain                      \
     -o COMPUTE_NODE=$compute_node      \
     -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
