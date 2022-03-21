@@ -10,7 +10,7 @@ S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L./CudaPFB_Lib\
 		     -lhashpipe -lrt -lm -lcudapfb -std=c++14\
 
-S6_FAST_LIB_TARGET   = 	serendip6.so
+S6_FAST_LIB_TARGET   = 	serendip6_reobs.so
 S6_FAST_LIB_SOURCES  = 	s6_databuf.cpp \
 		  				s6_pktsock_thread.cpp \
 		  				s6_gen_fake_data.cpp \
@@ -47,9 +47,9 @@ LIBDIR=$(prefix)/lib
 
 
 install-lib:  $(S6_FAST_LIB_TARGET)
+	make -C ${SUB_DIR} install
 	mkdir -p "$(DESTDIR)$(LIBDIR)"
 	install -p $^ "$(DESTDIR)$(LIBDIR)"
-	make -C ${SUB_DIR} install
 
 install: install-lib 
 

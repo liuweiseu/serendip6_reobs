@@ -21,7 +21,7 @@ net_thread="s6_fake_net_thread"
 compute_node=$(hostname)
 echo $net_thread
 
-hashpipe -p ./serendip6.so -I $instance   \
+hashpipe -p ./serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
