@@ -5,6 +5,7 @@ VERS6SW=0.0.2
 VERS6GW=0.0.2
 #iface_pol0=`myinterface.sh voltpol0`
 #iface_pol1=`myinterface.sh voltpol1`
+iface_pol0="10.10.10.4"
 
 workdir=$(cd $(dirname $0); pwd)
 bindhost=${iface_pol0}
@@ -17,7 +18,7 @@ gpucpu=6
 outcpu=7
 gain=1.0
 wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
-net_thread="s6_fake_net_thread"
+net_thread="s6_pktsock_thread"
 compute_node=$(hostname)
 echo $net_thread
 

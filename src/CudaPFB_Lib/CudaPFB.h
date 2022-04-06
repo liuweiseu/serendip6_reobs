@@ -16,8 +16,8 @@ typedef struct FFT_RES {
 #define SPECTRA     4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
-#define START_BIN   0
-#define STOP_BIN    255
+#define START_BIN   4608 //0
+#define STOP_BIN    4863 //255
 #define CH_PER_SPEC (STOP_BIN - START_BIN + 1)
 #define OUTPUT_LEN  SPECTRA * CH_PER_SPEC * 2 // multiplying 2 is for re and im parts
 
