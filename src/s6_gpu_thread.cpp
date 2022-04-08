@@ -174,9 +174,11 @@ static void *run(hashpipe_thread_args_t * args)
     //printf("preparing for weights...\r\n");
     char wfile[100]={0};
     hgets(st.buf,"WEIGHTS",100,wfile);
-    //printf("%s\r\n",wfile);
+    printf("%s\r\n",wfile);
     FILE *fp_weights;
     fp_weights = fopen(wfile,"r");
+    if(fp_weights==NULL)
+        printf("file can't be opened.\r\n");
     size_t r = 0;
     r = fread((float*)weights,sizeof(float),TAPS*CHANNELS,fp_weights);
     fclose(fp_weights);
@@ -273,10 +275,11 @@ static void *run(hashpipe_thread_args_t * args)
         else
         {
             fprintf(stderr, "PFB Success!\r\n");
-        }        
+        } 
+
         //GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
-        
         GPU_MoveDataToHost(data_p);
+        
         cal_rms(data_p, &rms, &average, &max);
         //adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
         adj_gain_static(data_p, gain, db_out->block[curblock_out].data);

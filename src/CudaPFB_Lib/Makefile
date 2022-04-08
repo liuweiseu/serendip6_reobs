@@ -9,7 +9,7 @@ SRC		= CudaPFB.cu
 NVCCFLAG  = -Xcompiler -fPIC --shared \
 			-I/usr/local/cuda/include \
 		  	-L/usr/local/cuda/lib64   \
-		  	-lcufft					
+		  	-lcufft	-arch=sm_61				
 
 ${TARGET}: ${SRC} ${INC} 
 	${NVCC} -o $@ ${SRC} ${NVCCFLAG}

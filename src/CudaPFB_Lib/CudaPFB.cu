@@ -93,6 +93,7 @@ void GPU_MallocBuffer()
     cudaMalloc((void**)&pfbfir_out_gpu, CHANNELS*SPECTRA*sizeof(cufftReal));
     cudaMalloc((void**)&data_out_gpu, CHANNELS*SPECTRA * sizeof(cufftComplex));
     cudaMallocHost((void**)&data_out_host, OUTPUT_LEN * sizeof(cufftComplex));
+    //data_out_host = (cufftComplex*)malloc(OUTPUT_LEN * sizeof(cufftComplex));
 }
 
 // This func is used for creating cufft plan
@@ -136,16 +137,15 @@ void GPU_MoveDataToHost(FFT_RES *dout)
     //cudaMemcpy(dout + i * CH_PER_SPEC, data_out_gpu + i * CHANNELS + START_BIN, OUTPUT_LEN * sizeof(DOUT_TYPE), cudaMemcpyDeviceToHost);
         cudaMemcpy(data_out_host + i * CH_PER_SPEC, \
                    data_out_gpu + i * CHANNELS + START_BIN, 
-                   OUTPUT_LEN * sizeof(cufftComplex), 
+                   CH_PER_SPEC * sizeof(cufftComplex), 
                    cudaMemcpyDeviceToHost);
-    for(int i = 0; i < OUTPUT_LEN/2; i++)
+    for(long int i = 0; i < OUTPUT_LEN/2; i++)
     {
         //dout[i] = data_out_host[i].x * data_out_host[i].x + \
                   data_out_host[i].y * data_out_host[i].y;
         dout[i].re = (float)data_out_host[i].x;
         dout[i].im = (float)data_out_host[i].y;
     }
-    
 }
 
 // do PFB
@@ -189,5 +189,6 @@ void GPU_FreeBuffer()
     cudaFree(pfbfir_out_gpu);
     cudaFree(data_out_gpu);
     cudaFreeHost(data_out_host);
+    //free(data_out_host);
 }
 //}

@@ -977,7 +977,9 @@ static void *run(hashpipe_thread_args_t * args)
     unsigned int pktsock_pkts = 0;  // Stats counter from socket packet
     unsigned int pktsock_drops = 0; // Stats counter from socket packet
     uint64_t pktsock_pkts_total = 0;  // Stats total for socket packet
+    //long long unsigned int pktsock_pkts_total = 0;  // Stats total for socket packet
     uint64_t pktsock_drops_total = 0; // Stats total for socket packet
+    //long long unsigned int pktsock_drops_total = 0; // Stats total for socket packet
     struct timespec start, stop;
     struct timespec recv_start, recv_stop;
     int dumpbool = 0;

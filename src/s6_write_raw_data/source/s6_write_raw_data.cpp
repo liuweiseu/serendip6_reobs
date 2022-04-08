@@ -42,6 +42,8 @@ int write_rawdata(char *d, unsigned long long l)
 int open_rawdata_file(char *filename)
 {
     fp = fopen(filename,"w");
+    if(fp==NULL)
+        printf("file can't be opened.\r\n");
     return 0;
 }
 
