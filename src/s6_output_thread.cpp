@@ -117,7 +117,7 @@ static void *run(hashpipe_thread_args_t * args)
                 break;
             }
         }
-        printf("get data\r\n");
+        //printf("get data\r\n");
         hashpipe_status_lock_safe(&st);
         hputs(st.buf, status_key, "processing");
         hashpipe_status_unlock_safe(&st);

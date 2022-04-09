@@ -19,8 +19,8 @@ outcpu=7
 gain=1.0
 #wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 wfile=$workdir"/matlab_fir_weights.dat"
-#net_thread="s6_pktsock_thread"
-net_thread="s6_fake_net_thread"
+net_thread="s6_pktsock_thread"
+#net_thread="s6_fake_net_thread"
 compute_node=$(hostname)
 echo $net_thread
 
