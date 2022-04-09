@@ -272,11 +272,12 @@ static void *run(hashpipe_thread_args_t * args)
             fprintf(stderr, "PFB failed!\r\n");
             return NULL;
         }
+        /*
         else
         {
             fprintf(stderr, "PFB Success!\r\n");
         } 
-
+        */
         //GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
         GPU_MoveDataToHost(data_p);
         
