@@ -13,9 +13,9 @@ freq_range="1.05G-1.45G"
 gpudev=0
 beam=1
 pol=0
-netcpu=5
-gpucpu=6
-outcpu=7
+netcpu=22
+gpucpu=23
+outcpu=20
 gain=1.0
 #wfile=$workdir"/fir_weights/matlab_fir_weights.dat"
 wfile=$workdir"/matlab_fir_weights.dat"
@@ -24,7 +24,8 @@ net_thread="s6_pktsock_thread"
 compute_node=$(hostname)
 echo $net_thread
 
-hashpipe -p ./serendip6_reobs.so -I $instance   \
+numactl --physcpubind=23,22,20 --membind=1,0	\
+/usr/local/bin/hashpipe -p serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
