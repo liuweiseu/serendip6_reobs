@@ -2,8 +2,8 @@ clear;
 clc;
 close all;
 
-N = 32768;
-TAPS = 4;
+N = 65536;
+TAPS = 8;
 fs = 1024;
 f= fs/N;
 

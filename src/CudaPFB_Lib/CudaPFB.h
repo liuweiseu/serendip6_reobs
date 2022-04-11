@@ -2,7 +2,7 @@
 #ifndef _CUDAPFB_H
 #define _CUDAPFB_H
 
-#define TAPS 4
+#define TAPS 8
 
 typedef struct FFT_RES {
     float re;
