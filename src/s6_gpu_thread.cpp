@@ -104,16 +104,20 @@ static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max,
 #endif
 }
 
-static void adj_gain_static(FFT_RES *din, float gain, char *dout)
+static void adj_gain_static(FFT_RES *din, float gain, float *dout)
 {
     int N = OUTPUT_LEN/2;
     int tmp = 0;
     for(int i = 0; i < N; i ++)
     {
+        /*
         tmp = (int)(din[i].re * gain);
         dout[2*i] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
         tmp = (int)(din[i].im * gain);
         dout[2*i+1] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+        */
+       dout[2*i] = din[i].re;
+       dout[2*i+1] = din[i].im;
     } 
 }
 static int init(hashpipe_thread_args_t *args)

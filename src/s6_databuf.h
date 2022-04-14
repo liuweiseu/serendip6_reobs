@@ -160,7 +160,8 @@ typedef uint8_t s6_output_header_cache_alignment[
 typedef struct s6_output_block {
   s6_output_block_header_t header;
   s6_output_header_cache_alignment padding; // Maintain cache alignment
-  char data[(OUTPUT_LEN)]; 
+  //char data[(OUTPUT_LEN)];
+  float data[(OUTPUT_LEN)];  
 } s6_output_block_t;
 
 typedef struct s6_output_databuf {
