@@ -33,9 +33,9 @@ void create_rawdata_filename(char *compute_node, char *freq_range, int bm_no, in
                                 time_nsec);
 }
 
-int write_rawdata(float *d, unsigned long long l)
+int write_rawdata(double *d, unsigned long long l)
 {
-    fwrite(d,l,sizeof(float),fp);
+    fwrite(d,l,sizeof(double),fp);
     return 0;
 }
 

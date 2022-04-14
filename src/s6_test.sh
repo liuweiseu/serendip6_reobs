@@ -7,6 +7,8 @@ VERS6GW=0.0.2
 #iface_pol1=`myinterface.sh voltpol1`
 iface_pol0="eth4"
 
+log_timestamp=`date +%Y%m%d_%H%M%S`
+
 workdir=$(cd $(dirname $0); pwd)
 bindhost=${iface_pol0}
 freq_range="1.05G-1.45G"
