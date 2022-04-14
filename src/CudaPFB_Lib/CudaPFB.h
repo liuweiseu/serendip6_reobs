@@ -5,8 +5,8 @@
 #define TAPS 8
 
 typedef struct FFT_RES {
-    float re;
-    float im;
+    double re;
+    double im;
 }FFT_RES;
 
 #define DIN_TYPE    char

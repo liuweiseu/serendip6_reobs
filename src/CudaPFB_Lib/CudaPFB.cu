@@ -143,8 +143,8 @@ void GPU_MoveDataToHost(FFT_RES *dout)
     {
         //dout[i] = data_out_host[i].x * data_out_host[i].x + \
                   data_out_host[i].y * data_out_host[i].y;
-        dout[i].re = (float)data_out_host[i].x;
-        dout[i].im = (float)data_out_host[i].y;
+        dout[i].re = (double)data_out_host[i].x;
+        dout[i].im = (double)data_out_host[i].y;
     }
 }
 

@@ -289,12 +289,12 @@ static void *run(hashpipe_thread_args_t * args)
         //adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
         adj_gain_static(data_p, gain, db_out->block[curblock_out].data);
 
-        hputr4(st.buf, "M_RE", max.re);
-        hputr4(st.buf, "M_IM", max.im);
-        hputr4(st.buf, "R_RE", rms.re);
-        hputr4(st.buf, "R_IM", rms.im);
-        hputr4(st.buf, "A_RE", average.re);
-        hputr4(st.buf, "A_IM", average.im);
+        hputr8(st.buf, "M_RE", max.re);
+        hputr8(st.buf, "M_IM", max.im);
+        hputr8(st.buf, "R_RE", rms.re);
+        hputr8(st.buf, "R_IM", rms.im);
+        hputr8(st.buf, "A_RE", average.re);
+        hputr8(st.buf, "A_IM", average.im);
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
