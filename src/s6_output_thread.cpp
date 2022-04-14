@@ -45,7 +45,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
     }
     else if(newfile == 1 && file_state == 1)
     {
-        write_rawdata((char*)&db->block[block_idx].data, N_DATA_BYTES_PER_OUT_BLOCK);
+        write_rawdata((float*)&db->block[block_idx].data, N_DATA_BYTES_PER_OUT_BLOCK);
         //fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
     }
     else if(newfile ==0 && file_state == 0)
