@@ -41,4 +41,8 @@ numactl --physcpubind=11,13,15 --membind=0,1	\
     -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
-    -c $outcpu s6_output_thread
+    -c $outcpu s6_output_thread        \
+    < /dev/null                        \
+    1> s6.${hostname}.out.${log_timestamp}.${pol} \
+    2> s6.${hostname}.err.${log_timestamp}.${pol} &
+
