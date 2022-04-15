@@ -16,9 +16,9 @@ typedef struct FFT_RES {
 #define SPECTRA     4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
-#define START_BIN   9216 //0
-#define STOP_BIN    9471 //255
-#define CH_PER_SPEC (STOP_BIN - START_BIN + 1)
+#define START_BIN   27392 //0
+#define CH_PER_SPEC 256
+#define STOP_BIN    START_BIN + CH_PER_SPEC -1 //255
 #define OUTPUT_LEN  SPECTRA * CH_PER_SPEC * 2 // multiplying 2 is for re and im parts
 
 void GPU_GetDevInfo();

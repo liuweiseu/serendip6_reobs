@@ -35,7 +35,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
                                 db->block[block_idx].header.time_sec, 
                                 db->block[block_idx].header.time_nsec, filename);
         open_rawdata_file(filename);
-        fprintf(stderr, "Filename: %s\r\n", filename);
+        fprintf(stdout, "Filename: %s\r\n", filename);
         file_state = 1;
     }
     else if(newfile == 0 && file_state == 1)
@@ -45,7 +45,7 @@ static int write_to_file(s6_output_databuf_t *db, int block_idx,
     }
     else if(newfile == 1 && file_state == 1)
     {
-        write_rawdata((char*)&db->block[block_idx].data, N_DATA_BYTES_PER_OUT_BLOCK);
+        write_rawdata((char*)(db->block[block_idx].data), N_DATA_BYTES_PER_OUT_BLOCK);
         //fwrite(&db->block[block_idx].data,N_DATA_BYTES_PER_BLOCK,1,fp);
     }
     else if(newfile ==0 && file_state == 0)

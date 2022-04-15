@@ -38,8 +38,6 @@ static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average)
     int N = OUTPUT_LEN/2;
     float sum_p_re = 0, sum_p_im = 0;
     float sum_re = 0, sum_im = 0;
-    max->re = 0;
-    max->im = 0;
     for(int i = 0; i < N; i++)
     {
         sum_p_re += d[i].re * d[i].re;
@@ -250,7 +248,7 @@ static void *run(hashpipe_thread_args_t * args)
         
         cal_rms(data_p, &rms_before, &average_before);
         //adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
-        adj_gain_static(data_p, rms_after, average_after, gain, db_out->block[curblock_out].data);
+        adj_gain_static(data_p, &rms_after, &average_after, gain, db_out->block[curblock_out].data);
 
         hashpipe_status_lock_safe(&st);
         hputr4(st.buf, "RMS_RE_BEF", rms_before.re);

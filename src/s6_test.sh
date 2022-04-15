@@ -28,7 +28,7 @@ compute_node=$(hostname)
 echo $net_thread
 
 numactl --physcpubind=12,13,15 --membind=0,1	\
-/usr/local/bin/hashpipe -p ./serendip6_reobs.so -I $instance   \
+/usr/local/bin/hashpipe -p serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \

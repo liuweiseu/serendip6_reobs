@@ -35,7 +35,7 @@ void create_rawdata_filename(char *compute_node, char *freq_range, int bm_no, in
 
 int write_rawdata(char *d, unsigned long long l)
 {
-    fwrite(d,l,1,fp);
+    fwrite(d,1,l,fp);
     return 0;
 }
 
