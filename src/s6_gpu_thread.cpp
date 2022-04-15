@@ -33,7 +33,7 @@
 
 #define SIN_WAVE 1
 // cal rms
-static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
+static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average)
 {
     int N = OUTPUT_LEN/2;
     float sum_p_re = 0, sum_p_im = 0;
@@ -46,10 +46,6 @@ static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
         sum_p_im += d[i].im * d[i].im;
         sum_re += d[i].re;
         sum_im += d[i].im;
-        if(abs(d[i].re) > max->re)
-            max->re = abs(d[i].re);
-        if(abs(d[i].im) > max->im)
-            max->im = abs(d[i].im);
     }
     rms->re = sqrt(sum_p_re / N);
     rms->im = sqrt(sum_p_im / N);
@@ -57,65 +53,34 @@ static void cal_rms(FFT_RES *d, FFT_RES *rms, FFT_RES *average, FFT_RES *max)
     average->im = sum_im / N;
 }
 
-// adjust gain of output data
-static void adj_gain(FFT_RES *din, FFT_RES *rms, FFT_RES *average, FFT_RES *max, char *dout)
-{
-    int N = OUTPUT_LEN/2;
-#ifndef SIN_WAVE
-    int tmp0 = 0, tmp1 = 0;
-    if(abs(average->re - rms->re) > abs(average->re + rms->re)) 
-        tmp0 = abs(average->re - rms->re);
-    else
-        tmp0 = abs(average->re + rms->re);
-    
-    if(abs(average->im - rms->im) > abs(average->im + rms->im)) 
-        tmp1 = abs(average->im - rms->im);
-    else
-        tmp1 = abs(average->im + rms->im);
-    
-    for(int i = 0; i < N; i++)
-    {
-        if(din[i].re < -tmp0)
-            dout[2*i] = -127;
-        else if(din[i].re > tmp0)
-            dout[2*i] = 127;
-        else
-            dout[2*i] = (char)(din[i].re/tmp0*127);
-
-        if(din[i].im < -tmp1)
-            dout[2*i+1] = -127;
-        else if(din[i].im > tmp1)
-            dout[2*i+1] = 127;
-        else
-            dout[2*i+1] = (char)(din[i].im/tmp1*127);
-    }
-#else
-    float tmp;
-    if(abs(max->re) > abs(max->im))
-        tmp = abs(max->re);
-    else
-        tmp = abs(max->im);
-    
-    for(int i = 0; i < N; i++)
-    {
-        dout[2*i] = din[i].re/tmp*127;
-        dout[2*i+1] = din[i].im/tmp*127;
-    }
-#endif
-}
-
-static void adj_gain_static(FFT_RES *din, float gain, char *dout)
+static void adj_gain_static(FFT_RES *din, FFT_RES *rms, FFT_RES *average, float gain, char *dout)
 {
     int N = OUTPUT_LEN/2;
     int tmp = 0;
+    
+    float sum_p_re = 0, sum_p_im = 0;
+    float sum_re = 0, sum_im = 0;
+
     for(int i = 0; i < N; i ++)
     {
         tmp = (int)(din[i].re * gain);
         dout[2*i] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
         tmp = (int)(din[i].im * gain);
         dout[2*i+1] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+
+        sum_p_re += dout[2*i] * dout[2*i];
+        sum_p_im += dout[2*i+1] * dout[2*i+1];
+
+        sum_re += dout[2*i];
+        sum_im += dout[2*i+1];
     } 
+
+    rms->re = sqrt(sum_p_re / N);
+    rms->im = sqrt(sum_p_im / N);
+    average->re = sum_re / N;
+    average->im = sum_im / N;
 }
+
 static int init(hashpipe_thread_args_t *args)
 {
     /*
@@ -141,9 +106,11 @@ static void *run(hashpipe_thread_args_t * args)
     int curblock_in=0;
     int curblock_out=0;
 
-    FFT_RES rms;                                        // rms of re and im
-    FFT_RES average;                                    // average of re and im
-    FFT_RES max;                                        // max value of re and im
+    FFT_RES rms_before;                                        // rms of re and im
+    FFT_RES average_before;                                    // average of re and im
+    FFT_RES rms_after;
+    FFT_RES average_after;
+
     FFT_RES *data_p = (FFT_RES*) malloc(N_DATA_BYTES_PER_OUT_BLOCK);
     float gain = 0;
      /*
@@ -281,16 +248,20 @@ static void *run(hashpipe_thread_args_t * args)
         //GPU_MoveDataToHost((FFT_RES*)(db_out->block[curblock_out].data));
         GPU_MoveDataToHost(data_p);
         
-        cal_rms(data_p, &rms, &average, &max);
+        cal_rms(data_p, &rms_before, &average_before);
         //adj_gain(data_p, &rms, &average, &max, db_out->block[curblock_out].data);
-        adj_gain_static(data_p, gain, db_out->block[curblock_out].data);
+        adj_gain_static(data_p, rms_after, average_after, gain, db_out->block[curblock_out].data);
 
-        hputr4(st.buf, "M_RE", max.re);
-        hputr4(st.buf, "M_IM", max.im);
-        hputr4(st.buf, "R_RE", rms.re);
-        hputr4(st.buf, "R_IM", rms.im);
-        hputr4(st.buf, "A_RE", average.re);
-        hputr4(st.buf, "A_IM", average.im);
+        hashpipe_status_lock_safe(&st);
+        hputr4(st.buf, "RMS_RE_BEF", rms_before.re);
+        hputr4(st.buf, "RMS_IM_BEF", rms_before.im);
+        hputr4(st.buf, "AVE_RE_BEF", average_before.re);
+        hputr4(st.buf, "AVE_IM_BEF", average_before.im);
+        hputr4(st.buf, "RMS_RE_AFT", rms_after.re);
+        hputr4(st.buf, "RMS_IM_AFT", rms_after.im);
+        hputr4(st.buf, "AVE_RE_AFT", average_after.re);
+        hputr4(st.buf, "AVE_IM_AFT", average_after.im);
+        hashpipe_status_unlock_safe(&st);
 
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;

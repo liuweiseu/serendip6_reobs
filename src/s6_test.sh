@@ -16,7 +16,7 @@ freq_range="1.05G-1.45G"
 gpudev=0
 beam=1
 pol=0
-netcpu=11
+netcpu=12
 gpucpu=13
 outcpu=15
 gain=1.0
@@ -27,7 +27,7 @@ net_thread="s6_pktsock_thread"
 compute_node=$(hostname)
 echo $net_thread
 
-numactl --physcpubind=11,13,15 --membind=0,1	\
+numactl --physcpubind=12,13,15 --membind=0,1	\
 /usr/local/bin/hashpipe -p ./serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
