@@ -2,7 +2,7 @@ clear;
 clc;
 close all;
 
-N = 32768;
+N = 65536;
 TAPS = 8;
 fs = 1000;
 f= fs/N;
@@ -12,6 +12,7 @@ ft = 'LOW';
 w = 'Hanning';
 
 lpf = fir1(TAPS*N-1,wn,ft,hanning(TAPS*N));
+lpf = lpf/max(lpf);
 
 subplot(2,1,1);
 plot(lpf);
