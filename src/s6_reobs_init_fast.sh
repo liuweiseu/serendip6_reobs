@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 
 VERS6SW=0.8.0                   \
 VERS6GW=0.1.0                   \
@@ -21,8 +21,7 @@ rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for two instances.
 instance_i=("1" "2")
-#instance_i=("1")
-log_timestamp=`date +%Y%m%d_%H%M%S`
+
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
   # sudo ipcrm -a
@@ -32,16 +31,22 @@ instances=(
   # run s6 on NUMA node 1 (odd CPUs on FAST compute nodes).  See script config_numa_affinity.sh 
   # for one time (per system boot) setup.
   #
-  # fastburst to use: 		numactl --physcpubind=14,16,18 --membind=0
-  # heimdall to use: 		CPU 12 and GPU 0
+  # fastburst to use:           numactl --physcpubind=14,16,18 --membind=0
+  # heimdall to use:            CPU 12 and GPU 0
   # and, optionally,
-  # second heimdall to use:	CPU  8 and GPU 0
+  # second heimdall to use:     CPU  8 and GPU 0
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=7,9,11   --membind=0,1 ${iface_pol0} 1   7  9 11  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=7,9,11   --membind=0,1 ${iface_pol0} 0   7  9 11  ${beam} 0  $log_timestamp" # Instance 1
   "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 2
 )
+
+workdir=$(cd $(dirname $0); pwd)
+wfile=$workdir"/fir_weights/fir_w_65536_8.dat"
+compute_node=$(hostname)
+gain=1.0
+freq_range="1.05G-1.45G"
 
 function init() {
   instance=${1}
@@ -68,48 +73,45 @@ function init() {
     return 1
   fi
 
-  if [ $net_thread == 's6_pktsock_thread' ]
+if [ $net_thread == 's6_pktsock_thread' ]
   then
-    # AO
-    #bindhost="eth$((2+2*instance))"
-    # GBT
-    # FAST
-    #bindhost="p2p$((3+instance))"
-    #bindhost="p2p$((2+instance))"
-    #bindhost="p2p1"
-    #bindhost="p2p$((4-instance))"
-    #bindhost="eth$((3+2*instance))"
     echo "binding $net_thread to $bindhost"
   fi
 
   echo numactl $numaops $membind       \
-  hashpipe -p serendip6 -I $instance   \
+  hashpipe -p ./serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
-    -o MAXHITS=2048                    \
-	  -o POWTHRSH=40					           \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
+    -o WEIGHTS=$wfile                  \
+    -o NEWFILE=0                       \
+    -o GAIN=$gain                      \
+    -o COMPUTE_NODE=$compute_node      \
+    -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread    
 
   numactl $numaops $membind            \
-  /usr/local/bin/hashpipe -p serendip6 -I $instance   \
+  /usr/local/bin/hashpipe -p ./serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
-    -o MAXHITS=2048                    \
-	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
     -o FASTBEAM=$beam                  \
     -o FASTPOL=$pol                    \
+    -o WEIGHTS=$wfile                  \
+    -o NEWFILE=0                       \
+    -o GAIN=$gain                      \
+    -o COMPUTE_NODE=$compute_node      \
+    -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread        \
@@ -155,20 +157,7 @@ else
     hashpipe_check_status -I $instidx -k MISSPKTL -s 0
   done
 
-  # Release NETHOLD
-  for instidx in ${instance_i[@]}
-  do
-    echo Releasing NETHOLD for s6c$mys6cn/$instidx
-    hashpipe_check_status -I $instidx -k NETHOLD -s 0
-  done
 fi
-
-# test mode
-for instidx in ${instance_i[@]}
-do
-  echo Turning on TESTMODE for $mys6cn/$instidx
-  hashpipe_check_status -I $instidx -k TESTMODE -s 0
-done
 
 # test mode
 for instidx in ${instance_i[@]}
@@ -176,4 +165,8 @@ do
   echo Turning on RUNALWYS for $mys6cn/$instidx
   hashpipe_check_status -I RUNALWYS $instidx -k  -s 1
 done
+                                                                                                                                                                                                                                                                167,1         Bot
+
+
+                                                                                                                                                                                                                                                                57,1          60%
 

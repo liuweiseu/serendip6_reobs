@@ -5,6 +5,9 @@ VERS6SW=0.0.2
 VERS6GW=0.0.2
 #iface_pol0=`myinterface.sh voltpol0`
 #iface_pol1=`myinterface.sh voltpol1`
+
+log_timestamp=`date +%Y%m%d_%H%M%S`
+
 iface_pol0="eth4"
 
 workdir=$(cd $(dirname $0); pwd)
@@ -41,4 +44,8 @@ numactl --physcpubind=11,13,15 --membind=0,1	\
     -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
-    -c $outcpu s6_output_thread
+    -c $outcpu s6_output_thread        \
+     < /dev/null                       \
+    1> s6.${hostname}.out.${log_timestamp}.${pol} \
+    2> s6.${hostname}.err.${log_timestamp}.${pol} &
+
