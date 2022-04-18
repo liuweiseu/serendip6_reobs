@@ -268,7 +268,7 @@ static void *run(hashpipe_thread_args_t * args)
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
 
-        memcpy(d_dap, (db_in->block[curblock_in].data)+(SPECTRA-TAPS-1)*CHANNELS, (TAPS-1)*CHANNELS);
+        memcpy(d_tap, (db_in->block[curblock_in].data)+(SPECTRA-TAPS-1)*CHANNELS, (TAPS-1)*CHANNELS);
         hashpipe_databuf_set_free((hashpipe_databuf_t *)db_in, curblock_in);
         curblock_in = (curblock_in + 1) % db_in->header.n_block;
 
@@ -278,6 +278,7 @@ static void *run(hashpipe_thread_args_t * args)
     GPU_DestroyPlan();
     GPU_FreeBuffer();
     free(data_p);
+    free(d_tap);
 	//sem_unlink(gpu_sem_name);
     return NULL;
 }
