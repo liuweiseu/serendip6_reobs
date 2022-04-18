@@ -27,7 +27,7 @@ int Host_MallocBuffer(DIN_TYPE **buf_in, DOUT_TYPE **buf_out);
 void GPU_MallocBuffer();
 int GPU_CreateFFTPlan();
 void GPU_MoveWeightsFromHost(float *weights);
-void GPU_MoveDataFromHost(DIN_TYPE *din);
+void GPU_MoveDataFromHost(DIN_TYPE *din, DIN_TYPE *d_tap);
 void GPU_MoveDataToHost(FFT_RES *dout);
 int GPU_DoPFB();
 void GPU_DestroyPlan();

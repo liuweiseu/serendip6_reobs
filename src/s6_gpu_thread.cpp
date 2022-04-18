@@ -147,10 +147,14 @@ static void *run(hashpipe_thread_args_t * args)
     size_t r = 0;
     r = fread((float*)weights,sizeof(float),TAPS*CHANNELS,fp_weights);
     fclose(fp_weights);
-    //for(int i = 0; i<(TAPS*CHANNELS); i++)weights[i] = 1.0;
-    //printf("weights ready.\r\n");
+
+    //create tap data buffer
+    char *d_tap = (char *)malloc((TAPS-1)*CHANNELS*sizeof(char));
+    memset(d_tap, 0 , (TAPS-1)*CHANNELS*sizeof(char));
+
     GPU_MoveWeightsFromHost(weights);
     
+      
     // create cufft plan
     status = GPU_CreateFFTPlan();
     if(status == -1)
@@ -230,7 +234,7 @@ static void *run(hashpipe_thread_args_t * args)
 
         db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 
-        GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data);
+        GPU_MoveDataFromHost((char*)db_in->block[curblock_in].data, d_tap);
         status = GPU_DoPFB();
         if(status == -1)
         {   
@@ -264,6 +268,7 @@ static void *run(hashpipe_thread_args_t * args)
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
 
+        memcpy(d_dap, (db_in->block[curblock_in].data)+(SPECTRA-TAPS-1)*CHANNELS, (TAPS-1)*CHANNELS);
         hashpipe_databuf_set_free((hashpipe_databuf_t *)db_in, curblock_in);
         curblock_in = (curblock_in + 1) % db_in->header.n_block;
 
