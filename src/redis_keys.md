@@ -91,3 +91,60 @@
 89) "fpga_r1746"
 90) "ADCRMS_m24"
 91) "ADCRMS_m28"
+
+redis info at Fast
+
+1) to redis
+const char * host_observatory = "10.128.8.8";
+int port_observatory = 6379;
+
+2) from redis
+const char * host_observatory = "10.128.1.65";
+int port_observatory = 8002;
+
+field-values:
+ 1) TimeStamp       "1650665852600"
+ 2) DUT1            "-0.12954"
+ 3) Receiver        "1.05G-1.45G(MB)"
+ 4) SDP_PhaPos_X    "9.34284"
+ 5) SDP_PhaPos_Y    "47.13808"
+ 6) SDP_PhaPos_Z    "-154.4623"
+ 7) SDP_AngleM      "1.074193"
+ 8) SDP_Beam00_RA   "19.2383"
+ 9) SDP_Beam00_DEC  "8.626611"
+10) SDP_Beam01_RA   "19.241283"
+11) SDP_Beam01_DEC  "8.711444"
+12) SDP_Beam02_RA   "19.244744"
+13) SDP_Beam02_DEC  "8.630694"
+14) SDP_Beam03_RA   "19.241758"
+15) SDP_Beam03_DEC  "8.545889"
+16) SDP_Beam04_RA   "19.235308"
+17) SDP_Beam04_DEC  "8.612545"
+18) SDP_Beam05_RA   "19.231853"
+19) SDP_Beam05_DEC  "8.622528"
+20) SDP_Beam06_RA   "19.234836"
+21) SDP_Beam06_DEC  "8.707361"
+22) SDP_Beam07_RA   "19.244269"
+23) SDP_Beam07_DEC  "8.79625"
+24) SDP_Beam08_RA   "19.247731"
+25) SDP_Beam08_DEC  "8.7155"
+26) SDP_Beam09_RA   "19.251189"
+27) SDP_Beam09_DEC  "8.63475"
+28) SDP_Beam10_RA   "19.248203"
+29) SDP_Beam10_DEC  "8.549944"
+30) SDP_Beam11_RA   "19.245219"
+31) SDP_Beam11_DEC  "8.465139"
+32) SDP_Beam12_RA   "19.238775"
+33) SDP_Beam12_DEC  "8.461056"
+34) SDP_Beam13_RA   "19.232333"
+35) SDP_Beam13_DEC  "8.456972"
+36) SDP_Beam14_RA   "19.228872"
+37) SDP_Beam14_DEC  "8.537667"
+38) SDP_Beam15_RA   "19.225408"
+39) SDP_Beam15_DEC  "8.618389"
+40) SDP_Beam16_RA   "19.228389"
+41) SDP_Beam16_DEC  "8.703222"
+42) SDP_Beam17_RA   "19.231372"
+43) SDP_Beam17_DEC  "8.788083"
+44) SDP_Beam18_RA   "19.237822"
+45) SDP_Beam18_DEC  "8.792167"

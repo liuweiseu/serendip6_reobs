@@ -62,9 +62,9 @@ static void adj_gain_static(FFT_RES *din, FFT_RES *rms, FFT_RES *average, float 
     for(int i = 0; i < N; i ++)
     {
         tmp = (int)(din[i].re * gain);
-        dout[2*i] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+        dout[2*i] = (tmp > 127)?127:((tmp < -127)?-127:tmp);
         tmp = (int)(din[i].im * gain);
-        dout[2*i+1] = (tmp > 127)?127:((tmp < -128)?-128:tmp);
+        dout[2*i+1] = (tmp > 127)?127:((tmp < -127)?-127:tmp);
 
         sum_p_re += dout[2*i] * dout[2*i];
         sum_p_im += dout[2*i+1] * dout[2*i+1];
@@ -268,7 +268,7 @@ static void *run(hashpipe_thread_args_t * args)
         s6_output_databuf_set_filled(db_out, curblock_out);
         curblock_out = (curblock_out + 1) % db_out->header.n_block;
 
-        memcpy(d_tap, (db_in->block[curblock_in].data)+(SPECTRA-TAPS-1)*CHANNELS, (TAPS-1)*CHANNELS);
+        memcpy(d_tap, (db_in->block[curblock_in].data)+(SPECTRA-TAPS+1)*CHANNELS, (TAPS-1)*CHANNELS);
         hashpipe_databuf_set_free((hashpipe_databuf_t *)db_in, curblock_in);
         curblock_in = (curblock_in + 1) % db_in->header.n_block;
 
