@@ -80,7 +80,7 @@ int put_info_to_redis(char *hostname, int port, const char * key, const char * v
 }
 
 //----------------------------------------------------------
-int get_info_from_redis(char *hostname, int port, const char* key, const char * field, char *value) {
+int get_info_from_redis(const char *hostname, int port, const char* key, const char * field, char *value) {
 //----------------------------------------------------------
 
     redisContext *c;

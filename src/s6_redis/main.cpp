@@ -12,7 +12,7 @@
 
 /* define the redis key struct */
 #define N_FIELDS  45
-#define REIDS_KEY "KY_ZK_RUN_DATA_RESULT_HASH"
+#define REDIS_KEY "KY_ZK_RUN_DATA_RESULT_HASH"
 struct redis_fields{
     const char *field[N_FIELDS];
 };

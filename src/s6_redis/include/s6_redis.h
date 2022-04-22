@@ -6,7 +6,7 @@
 #define HOST    "127.0.0.1"
 #define PORT    6379
 
-int get_info_from_redis(char *hostname, int port, const char *list, const char *key, char *value);
+int get_info_from_redis(const char *hostname, int port, const char *list, const char *key, char *value);
 int put_info_to_redis(char *hostname, int port, const char *key, const char *value);
 void create_metadata_filename(char *filename);
 FILE* open_metadata_file(char *filename);
