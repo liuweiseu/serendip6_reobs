@@ -10,18 +10,18 @@ hostname=`hostname -s`
 #net_thread=${1:-s6_pktsock_thread}
 net_thread="s6_pktsock_thread"
 beam=$1
-beam=$1
+
 
 iface_pol0=`myinterface.sh voltpol0`
 iface_pol1=`myinterface.sh voltpol1`
 
 # Remove old semaphore
-echo removing old semaphore, if any
-rm /dev/shm/sem.serendip6_gpu_sem_device_*
+#echo removing old semaphore, if any
+#rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for two instances.
 instance_i=("1" "2")
-
+log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
   # sudo ipcrm -a
@@ -31,21 +31,40 @@ instances=(
   # run s6 on NUMA node 1 (odd CPUs on FAST compute nodes).  See script config_numa_affinity.sh 
   # for one time (per system boot) setup.
   #
-  # fastburst to use:           numactl --physcpubind=14,16,18 --membind=0
-  # heimdall to use:            CPU 12 and GPU 0
+  # fastburst to use: 		numactl --physcpubind=14,16,18 --membind=0
+  # heimdall to use: 		CPU 12 and GPU 0
   # and, optionally,
-  # second heimdall to use:     CPU  8 and GPU 0
+  # second heimdall to use:	CPU  8 and GPU 0
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
   "--physcpubind=7,9,11   --membind=0,1 ${iface_pol0} 0   7  9 11  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 2
+  # "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=2,4,6 --membind=0,1 ${iface_pol1} 1  2 4 6  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 workdir=$(cd $(dirname $0); pwd)
 wfile=$workdir"/fir_weights/fir_w_65536_8.dat"
 compute_node=$(hostname)
-gain=1.0
+gain=("0.01" "0.02" \
+      "0.01" "0.01" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.02" \
+      "0.02" "0.01" )
 freq_range="1.05G-1.45G"
 
 function init() {
@@ -73,13 +92,14 @@ function init() {
     return 1
   fi
 
-if [ $net_thread == 's6_pktsock_thread' ]
+  if [ $net_thread == 's6_pktsock_thread' ]
   then
     echo "binding $net_thread to $bindhost"
   fi
-
+  gain_id=$[(beam-1)*2+instance-1]
+  echo "gain_id ${gain_id}"
   echo numactl $numaops $membind       \
-  hashpipe -p ./serendip6_reobs.so -I $instance   \
+  hashpipe -p serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
@@ -90,7 +110,7 @@ if [ $net_thread == 's6_pktsock_thread' ]
     -o FASTPOL=$pol                    \
     -o WEIGHTS=$wfile                  \
     -o NEWFILE=0                       \
-    -o GAIN=$gain                      \
+    -o GAIN=${gain[$gain_id ]}         \
     -o COMPUTE_NODE=$compute_node      \
     -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
@@ -98,7 +118,7 @@ if [ $net_thread == 's6_pktsock_thread' ]
     -c $outcpu s6_output_thread    
 
   numactl $numaops $membind            \
-  /usr/local/bin/hashpipe -p ./serendip6_reobs.so -I $instance   \
+  /usr/local/bin/hashpipe -p serendip6_reobs.so -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
@@ -109,7 +129,7 @@ if [ $net_thread == 's6_pktsock_thread' ]
     -o FASTPOL=$pol                    \
     -o WEIGHTS=$wfile                  \
     -o NEWFILE=0                       \
-    -o GAIN=$gain                      \
+    -o GAIN=${gain[$gain_id ]}         \
     -o COMPUTE_NODE=$compute_node      \
     -o FREQ=$freq_range                \
     -c $netcpu $net_thread             \
@@ -165,8 +185,3 @@ do
   echo Turning on RUNALWYS for $mys6cn/$instidx
   hashpipe_check_status -I RUNALWYS $instidx -k  -s 1
 done
-                                                                                                                                                                                                                                                                167,1         Bot
-
-
-                                                                                                                                                                                                                                                                57,1          60%
-

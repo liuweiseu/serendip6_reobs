@@ -18,28 +18,25 @@ static redisContext * redis_connect(char *hostname, int port) {
     c = redisConnectWithTimeout(hostname, port, timeout);
     if (c == NULL || c->err) {
         if (c) {
-            //hashpipe_error(__FUNCTION__, c->errstr);
+            fprintf(stderr, "%s\r\n", c->errstr);
             redisFree(c);   // get rid of the in-error context
             c = NULL;       // indicate error to caller (TODO - does redisFree null the context pointer?)
         } else {
-            //hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
+            fprintf(stderr, "%s\r\n", "Connection error: can't allocate redis context");
         }
     }
-
     return(c);
-
 }
 
 //----------------------------------------------------------
-static int s6_redis_get(redisContext *c, redisReply ** reply, const char *key) {
+static int s6_redis_get(redisContext *c, redisReply ** reply, const char * query) {
 //----------------------------------------------------------
 
     int rv = 0;
     int i;
     char * errstr;
 
-
-    *reply = (redisReply *)redisCommand(c, "GET  %s", key);
+    *reply = (redisReply *)redisCommand(c, query);
 
     if(*reply == NULL) {
         errstr = c->errstr;
@@ -56,11 +53,10 @@ static int s6_redis_get(redisContext *c, redisReply ** reply, const char *key) {
             }
         }
     }
-    /*
+
     if(rv) {
-        hashpipe_error(__FUNCTION__, "redis query (%s) returned an error : %s", query, errstr);
+        fprintf(stderr, "redis query (%s) returned an error : %s\r\n", query, errstr);
     }
-    */
     return(rv); 
 }
 
@@ -70,7 +66,7 @@ int put_info_to_redis(char *hostname, int port, const char * key, const char * v
     redisContext *c;
     redisReply *reply;
     int rv=0;
-
+    /*
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
     c = redisConnectWithTimeout(hostname, port, timeout);
 
@@ -79,36 +75,42 @@ int put_info_to_redis(char *hostname, int port, const char * key, const char * v
         freeReplyObject(reply);
         redisFree(c); 
     }
-
+    */
     return(rv);
 }
 
 //----------------------------------------------------------
-int get_info_from_redis(char *hostname, int port, const char * key, char *value) {
+int get_info_from_redis(char *hostname, int port, const char* key, const char * field, char *value) {
 //----------------------------------------------------------
 
     redisContext *c;
     int rv = 0;
     redisReply *reply;
 
+    char query[64];
+    memset(query, 0 ,64);
+    sprintf(query, "hmget %s %s", key, field);
+    
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
 	// Local instrument DB
     c = redisConnectWithTimeout(hostname, port, timeout);
     if (c == NULL || c->err) {
         if (c) {
-            //hashpipe_error(__FUNCTION__, c->errstr);
+            fprintf(stderr, "%s\r\n", c->errstr);
             redisFree(c);
         } else {
-            //hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
+            fprintf(stderr, "Connection error: can't allocate redis context");
         }
         exit(1);
     }
 
-	rv = s6_redis_get(c, &reply, key);
-    memcpy(value, reply->str,reply->len);
+    rv = s6_redis_get(c, &reply,"AUTH fast");
+
+	rv = s6_redis_get(c, &reply, query);
+    memcpy(value, reply->element[0]->str,reply->element[0]->len);
     freeReplyObject(reply);
     if(c) redisFree(c);
-
+    
     return rv;         
 }
 
@@ -120,7 +122,7 @@ void create_metadata_filename(char *filename)
 
 FILE* open_metadata_file(char *filename)
 {
-
+    return NULL;
 }
 
 void write_metadata(char *d, FILE *fp)

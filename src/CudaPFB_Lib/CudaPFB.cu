@@ -25,9 +25,10 @@ cufftHandle plan;
 // PFB FIR parameters
 static int step        = CHANNELS;
 static int out_n       = step * SPECTRA;
-static int stepy       = out_n/(256*1024)*step;
+static int stepy       = out_n/(256*1024)*step; //not used
 static int groupsx     = step/WGS;
-static int groupsy     = (out_n + stepy - 1)/stepy;
+//static int groupsy     = (out_n + stepy - 1)/stepy;
+static int groupsy     = SPECTRA/WGS;
 dim3 dimgrid(groupsx*WGS, groupsy);
 dim3 dimblock(WGS,1);
 
@@ -124,9 +125,10 @@ void GPU_MoveWeightsFromHost(float *weights)
 }
 
 // move data from host to GPU
-void GPU_MoveDataFromHost(DIN_TYPE *din)
+void GPU_MoveDataFromHost(DIN_TYPE *din, DIN_TYPE *d_tap)
 {
-    cudaMemcpy(data_in_gpu, din, SAMPLES * sizeof(DIN_TYPE), cudaMemcpyHostToDevice);
+    cudaMemcpy(data_in_gpu, d_tap, CHANNELS * (TAPS-1) *sizeof(DIN_TYPE), cudaMemcpyHostToDevice);
+    cudaMemcpy(data_in_gpu + CHANNELS * (TAPS-1) *sizeof(DIN_TYPE), din, CHANNELS * SPECTRA * sizeof(DIN_TYPE), cudaMemcpyHostToDevice);
 }
 
 // move data from GPU to host

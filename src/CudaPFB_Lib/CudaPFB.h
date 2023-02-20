@@ -16,8 +16,8 @@ typedef struct FFT_RES {
 #define SPECTRA     4096
 #define SAMPLES     CHANNELS * (SPECTRA + TAPS - 1)
 
-#define START_BIN   27392 //0
-#define CH_PER_SPEC 256
+#define START_BIN   27392 //6550//30583 //27392 //0
+#define CH_PER_SPEC 256   //2     //256
 #define STOP_BIN    START_BIN + CH_PER_SPEC -1 //255
 #define OUTPUT_LEN  SPECTRA * CH_PER_SPEC * 2 // multiplying 2 is for re and im parts
 
@@ -27,7 +27,7 @@ int Host_MallocBuffer(DIN_TYPE **buf_in, DOUT_TYPE **buf_out);
 void GPU_MallocBuffer();
 int GPU_CreateFFTPlan();
 void GPU_MoveWeightsFromHost(float *weights);
-void GPU_MoveDataFromHost(DIN_TYPE *din);
+void GPU_MoveDataFromHost(DIN_TYPE *din, DIN_TYPE *d_tap);
 void GPU_MoveDataToHost(FFT_RES *dout);
 int GPU_DoPFB();
 void GPU_DestroyPlan();
