@@ -25,7 +25,7 @@ cufftHandle plan;
 // PFB FIR parameters
 static int step        = CHANNELS;
 static int out_n       = step * SPECTRA;
-static int stepy       = out_n/(256*1024)*step; //not used
+static int stepy       = out_n/(256*1024)*step;
 static int groupsx     = step/WGS;
 //static int groupsy     = (out_n + stepy - 1)/stepy;
 static int groupsy     = SPECTRA/WGS;
