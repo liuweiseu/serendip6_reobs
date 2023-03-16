@@ -7,7 +7,8 @@ TAPS = 8;
 fs = 1000;
 f= fs/N;
 
-wn = f*2/fs;
+%wn = f*2/fs;
+wn = f/fs;
 ft = 'LOW';
 w = 'Hanning';
 
